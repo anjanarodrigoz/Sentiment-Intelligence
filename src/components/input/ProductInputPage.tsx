@@ -11,7 +11,12 @@ export default function ProductInputPage() {
     useAppStore();
   const { runAnalysis } = useAnalysis();
 
-  const allValid = products.every((p) => p.title && p.reviewFile);
+  const allValid = products.every((p) =>
+    p.title && (
+      (p.inputMode === 'file' && p.reviewFile) ||
+      (p.inputMode === 'url' && p.scrapedReviews && p.scrapedReviews.length > 0)
+    )
+  );
 
   const handleAnalyze = async () => {
     await runAnalysis();

@@ -41,8 +41,15 @@ export function useAnalysis() {
       const product = products[i];
       setProcessing(true, Math.round(((i + 0.3) / products.length) * 100));
 
-      // 1. Parse file
-      const rawReviews = await parseReviewFile(product.reviewFile!);
+      // 1. Get reviews from file or URL scrape
+      let rawReviews;
+      if (product.inputMode === 'url' && product.scrapedReviews) {
+        rawReviews = product.scrapedReviews;
+      } else if (product.reviewFile) {
+        rawReviews = await parseReviewFile(product.reviewFile);
+      } else {
+        throw new Error(`No review data for "${product.title}"`);
+      }
       setProcessing(true, Math.round(((i + 0.5) / products.length) * 100));
 
       // 2. Analyze reviews

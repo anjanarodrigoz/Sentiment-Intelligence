@@ -6,15 +6,15 @@ import { useAppStore } from '../store/useAppStore';
 
 export default function Input() {
   const navigate = useNavigate();
-  const { mode, products } = useAppStore();
+  const { selectedBrand, mode, products } = useAppStore();
 
   useEffect(() => {
-    if (!mode || products.length === 0) {
+    if (!selectedBrand || !mode || products.length === 0) {
       navigate('/');
     }
-  }, [mode, products.length, navigate]);
+  }, [selectedBrand, mode, products.length, navigate]);
 
-  if (!mode || products.length === 0) return null;
+  if (!selectedBrand || !mode || products.length === 0) return null;
 
   return (
     <PageContainer>

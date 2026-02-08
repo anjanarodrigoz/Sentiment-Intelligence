@@ -1,4 +1,4 @@
-import type { AnalyzedReview } from './review';
+import type { AnalyzedReview, RawReview } from './review';
 import type {
   SentimentSummary,
   AttributeCount,
@@ -16,6 +16,10 @@ export interface ProductInput {
   reviewFile: File | null;
   reviewFileName: string;
   reviewCount: number;
+  inputMode: 'file' | 'url';
+  brand: string;
+  productUrl: string;
+  scrapedReviews: RawReview[] | null;
 }
 
 export interface ProductAnalysis {

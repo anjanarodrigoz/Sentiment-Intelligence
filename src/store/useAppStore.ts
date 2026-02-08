@@ -3,6 +3,7 @@ import type { AnalysisMode } from '../types/app';
 import type { ProductInput, ProductAnalysis } from '../types/product';
 
 interface AppState {
+  selectedBrand: string;
   mode: AnalysisMode | null;
   productCount: number;
   products: ProductInput[];
@@ -11,6 +12,7 @@ interface AppState {
   isProcessing: boolean;
   processingProgress: number;
 
+  setBrand: (brand: string) => void;
   setMode: (mode: AnalysisMode) => void;
   setProductCount: (count: number) => void;
   initProducts: (count: number) => void;
@@ -32,10 +34,15 @@ function createEmptyProduct(index: number): ProductInput {
     reviewFile: null,
     reviewFileName: '',
     reviewCount: 0,
+    inputMode: 'file',
+    brand: '',
+    productUrl: '',
+    scrapedReviews: null,
   };
 }
 
 export const useAppStore = create<AppState>((set) => ({
+  selectedBrand: '',
   mode: null,
   productCount: 1,
   products: [],
@@ -43,6 +50,8 @@ export const useAppStore = create<AppState>((set) => ({
   aggregateAnalysis: null,
   isProcessing: false,
   processingProgress: 0,
+
+  setBrand: (brand) => set({ selectedBrand: brand }),
 
   setMode: (mode) =>
     set({
@@ -73,6 +82,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   reset: () =>
     set({
+      selectedBrand: '',
       mode: null,
       productCount: 1,
       products: [],
