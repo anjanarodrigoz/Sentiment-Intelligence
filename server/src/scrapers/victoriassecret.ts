@@ -212,14 +212,86 @@ export const victoriaSecretScraper: ReviewScraper = {
       });
       await delay(3000);
 
-      // Get fallback product info from page meta tags
+      // Extract actual product image from the page DOM
       const pageMeta = await page.evaluate(() => {
         const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content');
-        const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
         const h1 = document.querySelector('h1')?.textContent?.trim();
+
+        // Find the real product image (not og:image which is a generic VS share image)
+        let imageUrl = '';
+
+        // Strategy 1: Look for main product image by common selectors
+        const imgSelectors = [
+          'img[data-testid*="product-image"]',
+          'img[data-testid*="hero-image"]',
+          'img[class*="product-image"]',
+          'img[class*="ProductImage"]',
+          'img[class*="productImage"]',
+          'img[class*="hero-image"]',
+          'img[class*="pdp-image"]',
+          '.product-image img',
+          '.product-gallery img',
+          '[data-testid*="gallery"] img',
+          'picture source[type="image/webp"]',
+        ];
+
+        for (const sel of imgSelectors) {
+          const el = document.querySelector(sel);
+          if (el) {
+            const src = el.getAttribute('src') || el.getAttribute('srcset')?.split(' ')[0] || '';
+            if (src && !src.includes('default-share') && !src.includes('placeholder')) {
+              imageUrl = src;
+              break;
+            }
+          }
+        }
+
+        // Strategy 2: Find the largest product image on the page
+        if (!imageUrl) {
+          const allImages = document.querySelectorAll('img[src*="victoriassecret.com/p/"]');
+          let bestImg = '';
+          let bestSize = 0;
+          allImages.forEach((img) => {
+            const src = img.getAttribute('src') || '';
+            const w = (img as HTMLImageElement).naturalWidth || parseInt(img.getAttribute('width') || '0');
+            const h = (img as HTMLImageElement).naturalHeight || parseInt(img.getAttribute('height') || '0');
+            const size = w * h;
+            if (size > bestSize || (!bestImg && src)) {
+              bestSize = size;
+              bestImg = src;
+            }
+          });
+          if (bestImg) imageUrl = bestImg;
+        }
+
+        // Strategy 3: Look for any large image with VS CDN pattern
+        if (!imageUrl) {
+          const cdnImages = document.querySelectorAll('img[src*="/p/"], img[src*="/tif/"], img[src*="images.victorias"]');
+          for (const img of cdnImages) {
+            const src = img.getAttribute('src') || '';
+            if (src && !src.includes('default-share') && !src.includes('icon') && !src.includes('logo')) {
+              imageUrl = src;
+              break;
+            }
+          }
+        }
+
+        // Strategy 4: og:image as last resort (may be generic)
+        if (!imageUrl) {
+          const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content') || '';
+          if (ogImage && !ogImage.includes('default-share')) {
+            imageUrl = ogImage;
+          }
+        }
+
+        // Make relative URLs absolute
+        if (imageUrl && !imageUrl.startsWith('http')) {
+          imageUrl = `https://www.victoriassecret.com${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+        }
+
         return {
           title: ogTitle || h1 || document.title || 'Unknown Product',
-          imageUrl: ogImage || '',
+          imageUrl,
         };
       });
 
@@ -242,8 +314,14 @@ export const victoriaSecretScraper: ReviewScraper = {
       if (!result.product.title || result.product.title === 'Unknown Product') {
         result.product.title = pageMeta.title;
       }
-      if (!result.product.imageUrl) {
+
+      // Prefer the DOM-scraped image (product-specific) over the API image (often generic)
+      const apiImage = result.product.imageUrl;
+      const isApiImageGeneric = !apiImage || apiImage.includes('default-share') || apiImage.includes('placeholder');
+      if (pageMeta.imageUrl) {
         result.product.imageUrl = pageMeta.imageUrl;
+      } else if (isApiImageGeneric) {
+        result.product.imageUrl = '';
       }
 
       if (result.reviews.length === 0) {
