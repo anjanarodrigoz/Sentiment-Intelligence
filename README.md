@@ -71,3 +71,7 @@ export default defineConfig([
   },
 ])
 ```
+
+
+mongo db serive start 
+brew services start mongodb-community

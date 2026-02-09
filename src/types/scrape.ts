@@ -15,6 +15,9 @@ export interface ScrapeResponse {
   product: ScrapedProduct;
   reviews: RawReview[];
   source: string;
+  cached?: boolean;
+  version?: number;
+  scrapedAt?: Date;
 }
 
 export interface ScrapeError {

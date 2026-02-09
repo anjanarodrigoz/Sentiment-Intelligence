@@ -2,8 +2,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import { scrapeRoute } from './routes/scrape.js';
 import { closeBrowser } from './utils/browser.js';
+import { connectDB, closeDB } from './config/database.js';
+
+// Load environment variables
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,6 +38,9 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Connect to MongoDB before starting server
+await connectDB();
+
 const server = app.listen(PORT, () => {
   console.log(`Scraper server running on http://localhost:${PORT}`);
 });
@@ -42,6 +50,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, async () => {
     console.log(`\n${signal} received, shutting down...`);
     await closeBrowser();
+    await closeDB();
     server.close();
     process.exit(0);
   });
