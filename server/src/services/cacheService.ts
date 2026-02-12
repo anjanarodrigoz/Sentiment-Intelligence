@@ -2,6 +2,7 @@ import { getDB } from '../config/database.js';
 import { ObjectId } from 'mongodb';
 import type { Product } from '../models/Product.js';
 import type { ProductVersion } from '../models/ProductVersion.js';
+import type { Review } from '../models/Review.js';
 import type { ScrapeResult } from '../scrapers/types.js';
 
 interface CacheOptions {
@@ -46,14 +47,25 @@ export async function getCachedScrape(
         { sort: { version: -1 } }
       );
 
-    if (!latestVersion) {
+    if (!latestVersion || !latestVersion._id) {
       return null;
     }
 
-    // Transform to ScrapeResult format
+    // Fetch reviews from separate collection
+    const reviews = await db
+      .collection<Review>('reviews')
+      .find({ productVersionId: latestVersion._id })
+      .sort({ createdAt: 1 })
+      .toArray();
+
+    // Transform to ScrapeResult format (matching old structure)
     return {
       product: latestVersion.product,
-      reviews: latestVersion.reviews,
+      reviews: reviews.map(r => ({
+        text: r.text,
+        rating: r.rating,
+        date: r.date,
+      })),
       source: latestVersion.source,
       cached: true,
       version: latestVersion.version,
@@ -124,23 +136,41 @@ export async function storeScrapeResult(
       productId = insertResult.insertedId;
     }
 
-    // Insert new product version
-    await db.collection<ProductVersion>('product_versions').insertOne({
-      productId,
-      version: newVersion,
-      scrapedAt: now,
-      product: {
-        title: result.product.title,
-        imageUrl: result.product.imageUrl,
-        rating: result.product.rating,
-        reviewCount: result.product.reviewCount,
-      },
-      reviews: result.reviews,
-      source: result.source,
-      reviewCount: result.reviews.length,
-    });
+    // Insert new product version WITHOUT reviews array
+    const versionInsertResult = await db
+      .collection<ProductVersion>('product_versions')
+      .insertOne({
+        productId,
+        version: newVersion,
+        scrapedAt: now,
+        product: {
+          title: result.product.title,
+          imageUrl: result.product.imageUrl,
+          rating: result.product.rating,
+          reviewCount: result.product.reviewCount,
+        },
+        source: result.source,
+        reviewCount: result.reviews.length,
+      });
 
-    console.log(`Stored scrape result: version ${newVersion} for ${normalizedUrl}`);
+    const productVersionId = versionInsertResult.insertedId;
+
+    // Insert reviews into separate collection
+    if (result.reviews.length > 0) {
+      const reviewDocs = result.reviews.map(review => ({
+        productVersionId,
+        productId,
+        version: newVersion,
+        text: review.text,
+        rating: review.rating,
+        date: review.date,
+        createdAt: now,
+      }));
+
+      await db.collection<Review>('reviews').insertMany(reviewDocs);
+    }
+
+    console.log(`Stored version ${newVersion}: ${result.reviews.length} reviews in separate collection for ${normalizedUrl}`);
   } catch (error) {
     console.error('Failed to store scrape result:', error);
     // Don't throw - allow response to return to user even if caching fails

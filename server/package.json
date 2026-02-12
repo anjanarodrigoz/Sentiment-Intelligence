@@ -7,7 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate": "tsx src/scripts/migrate.ts"
+    "migrate": "tsx src/scripts/migrate.ts",
+    "migrate:reviews": "tsx src/scripts/migrateReviews.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

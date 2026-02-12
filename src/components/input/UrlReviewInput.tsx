@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Globe, Loader2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import Button from '../ui/Button';
 import { useScrape } from '../../hooks/useScrape';
+import { useScrapeStream } from '../../hooks/useScrapeStream';
+import ProgressBar from '../ui/ProgressBar';
 import { useAppStore } from '../../store/useAppStore';
 import type { RawReview } from '../../types/review';
 
@@ -31,7 +33,22 @@ export default function UrlReviewInput({
   onScrapeComplete,
 }: UrlReviewInputProps) {
   const { selectedBrand } = useAppStore();
-  const { isLoading, error, scrape } = useScrape();
+  const { isLoading, error: fetchError, scrape } = useScrape();
+  const {
+    isStreaming,
+    progress,
+    allReviews,
+    product,
+    error: streamError,
+    isComplete,
+    isCached,
+    source: streamSource,
+    scrapedAt,
+    version: streamVersion,
+    startStream,
+    cancelStream,
+  } = useScrapeStream();
+
   const [source, setSource] = useState<string>('');
   const [scrapeMetadata, setScrapeMetadata] = useState<{
     cached: boolean;
@@ -39,34 +56,60 @@ export default function UrlReviewInput({
     scrapedAt: Date;
   } | null>(null);
 
-  const handleFetch = async (forceRescrape = false) => {
-    if (!productUrl || !selectedBrand) return;
+  // Track if we've already completed this scrape to prevent infinite loops
+  const completedRef = useRef(false);
 
-    const result = await scrape(productUrl, selectedBrand, forceRescrape);
-    if (result) {
-      setSource(result.source);
+  // Handle completion of streaming
+  useEffect(() => {
+    console.log('[UrlReviewInput] useEffect triggered:', {
+      isComplete,
+      hasProduct: !!product,
+      reviewsLength: allReviews.length,
+      completedRefCurrent: completedRef.current,
+    });
 
-      const metadata =
-        result.cached !== undefined && result.version !== undefined && result.scrapedAt
-          ? {
-              cached: result.cached,
-              version: result.version,
-              scrapedAt: new Date(result.scrapedAt),
-            }
-          : null;
+    if (isComplete && product && allReviews.length > 0 && !completedRef.current) {
+      console.log('[UrlReviewInput] Calling onScrapeComplete with:', {
+        title: product.title,
+        reviewCount: allReviews.length,
+        rating: product.rating,
+      });
+
+      completedRef.current = true;
+      setSource(streamSource || '');
+
+      const metadata = scrapedAt && streamVersion
+        ? {
+            cached: isCached,
+            version: streamVersion,
+            scrapedAt: scrapedAt,
+          }
+        : null;
 
       setScrapeMetadata(metadata);
 
       onScrapeComplete({
-        title: result.product.title,
-        imageUrl: result.product.imageUrl,
-        overallRating: result.product.rating,
-        overallReviewCount: result.product.reviewCount,
-        scrapedReviews: result.reviews,
+        title: product.title,
+        imageUrl: product.imageUrl,
+        overallRating: product.rating,
+        overallReviewCount: product.reviewCount,
+        scrapedReviews: allReviews,
         productUrl,
         scrapeMetadata: metadata || undefined,
       });
+
+      console.log('[UrlReviewInput] onScrapeComplete called successfully');
     }
+  }, [isComplete, product, allReviews, streamSource, scrapedAt, isCached, streamVersion, productUrl, onScrapeComplete]);
+
+  const handleFetch = async (forceRescrape = false) => {
+    if (!productUrl || !selectedBrand) return;
+
+    // Reset completion flag when starting a new scrape
+    completedRef.current = false;
+
+    // Use streaming for progressive loading
+    startStream(productUrl, selectedBrand, forceRescrape);
   };
 
   // Format timestamp for display
@@ -84,6 +127,9 @@ export default function UrlReviewInput({
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   };
+
+  const error = fetchError || streamError;
+  const isBusy = isLoading || isStreaming;
 
   const isValidUrl = (() => {
     try {
@@ -113,10 +159,10 @@ export default function UrlReviewInput({
         </div>
         <Button
           onClick={() => handleFetch()}
-          disabled={!isValidUrl || isLoading}
+          disabled={!isValidUrl || isBusy}
           size="sm"
         >
-          {isLoading ? (
+          {isBusy ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
               Fetching...
@@ -126,6 +172,17 @@ export default function UrlReviewInput({
           )}
         </Button>
       </div>
+
+      {/* Streaming progress */}
+      {isStreaming && !isCached && (
+        <div className="bg-blue-50 p-3 rounded-lg">
+          <ProgressBar
+            current={progress.current}
+            estimated={progress.estimated}
+            percentage={progress.percentage}
+          />
+        </div>
+      )}
 
       {error && (
         <div className="flex items-start gap-2 text-sm text-sentiment-negative bg-red-50 p-3 rounded-lg">
@@ -154,7 +211,7 @@ export default function UrlReviewInput({
               </div>
             )}
           </div>
-          <Button variant="secondary" size="sm" onClick={() => handleFetch(true)} disabled={isLoading}>
+          <Button variant="secondary" size="sm" onClick={() => handleFetch(true)} disabled={isBusy}>
             <RefreshCw className="w-3 h-3" />
             Re-scrape
           </Button>

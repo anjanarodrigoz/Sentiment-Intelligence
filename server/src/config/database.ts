@@ -59,6 +59,15 @@ async function createIndexes(db: Db): Promise<void> {
     );
     await db.collection('product_versions').createIndex({ scrapedAt: -1 });
 
+    // Reviews collection indexes
+    await db.collection('reviews').createIndex(
+      { productVersionId: 1, createdAt: -1 }
+    );
+    await db.collection('reviews').createIndex(
+      { productId: 1, version: 1 }
+    );
+    await db.collection('reviews').createIndex({ productVersionId: 1 });
+
     // Brands collection indexes
     await db.collection('brands').createIndex({ id: 1 }, { unique: true });
     await db.collection('brands').createIndex({ isActive: 1 });

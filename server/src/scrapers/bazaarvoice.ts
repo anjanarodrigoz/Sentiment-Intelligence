@@ -1,4 +1,4 @@
-import type { ReviewScraper, ScrapeResult, ScrapedReview } from './types.js';
+import type { ReviewScraper, ScrapeResult, ScrapedReview, BatchCallback } from './types.js';
 import { createPage, closePage } from './baseScraper.js';
 import { politeDelay } from '../utils/rateLimit.js';
 
@@ -116,12 +116,14 @@ function extractProductIdFromUrl(url: string): string {
 async function fetchBVReviews(
   passkey: string,
   productId: string,
-  limit = 200
+  limit = 200,
+  onBatch?: BatchCallback
 ): Promise<{ reviews: ScrapedReview[]; product: { title: string; imageUrl: string; rating: number; reviewCount: number } }> {
   const reviews: ScrapedReview[] = [];
   let offset = 0;
   const batchSize = 100;
   let productInfo = { title: '', imageUrl: '', rating: 0, reviewCount: 0 };
+  let batchNumber = 1;
 
   while (reviews.length < limit) {
     const apiUrl = `https://api.bazaarvoice.com/data/batch.json?passkey=${passkey}&apiversion=5.5&resource.q0=reviews&filter.q0=isratingsonly%3Aeq%3Afalse&filter.q0=productid%3Aeq%3A${productId}&limit.q0=${batchSize}&offset.q0=${offset}&sort.q0=submissiontime%3Adesc&resource.q1=products&filter.q1=id%3Aeq%3A${productId}`;
@@ -174,15 +176,29 @@ async function fetchBVReviews(
       productInfo.reviewCount = q0.TotalResults;
     }
 
+    // Collect reviews from this batch
+    const batchReviews: ScrapedReview[] = [];
     for (const review of q0.Results) {
       if (reviews.length >= limit) break;
       if (review.ReviewText) {
-        reviews.push({
+        const scrapedReview = {
           text: review.ReviewText,
           rating: review.Rating || 0,
           date: review.SubmissionTime?.split('T')[0] || '',
-        });
+        };
+        reviews.push(scrapedReview);
+        batchReviews.push(scrapedReview);
       }
+    }
+
+    // Invoke batch callback if provided
+    if (onBatch && batchReviews.length > 0) {
+      onBatch({
+        batchNumber: batchNumber++,
+        reviews: batchReviews,
+        totalFetched: reviews.length,
+        estimatedTotal: q0.TotalResults,
+      });
     }
 
     if (q0.Results.length < batchSize) break;
@@ -205,9 +221,9 @@ export const bazaarVoiceScraper: ReviewScraper = {
     }
   },
 
-  async scrape(url: string): Promise<ScrapeResult> {
+  async scrape(url: string, onBatch?: BatchCallback): Promise<ScrapeResult> {
     const config = await discoverBVConfig(url);
-    const { reviews, product } = await fetchBVReviews(config.passkey, config.productId);
+    const { reviews, product } = await fetchBVReviews(config.passkey, config.productId, 200, onBatch);
 
     if (reviews.length === 0) {
       throw new Error('No reviews found for this product');

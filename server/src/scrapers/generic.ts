@@ -1,4 +1,4 @@
-import type { ReviewScraper, ScrapeResult, ScrapedReview } from './types.js';
+import type { ReviewScraper, ScrapeResult, ScrapedReview, BatchCallback } from './types.js';
 import { createPage, closePage } from './baseScraper.js';
 
 export const genericScraper: ReviewScraper = {
@@ -9,7 +9,7 @@ export const genericScraper: ReviewScraper = {
     return true;
   },
 
-  async scrape(url: string): Promise<ScrapeResult> {
+  async scrape(url: string, onBatch?: BatchCallback): Promise<ScrapeResult> {
     const page = await createPage();
 
     try {

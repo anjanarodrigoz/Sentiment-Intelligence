@@ -1,4 +1,4 @@
-import type { ReviewScraper, ScrapeResult, ScrapedReview } from './types.js';
+import type { ReviewScraper, ScrapeResult, ScrapedReview, BatchCallback } from './types.js';
 import { createFullPage, closePage } from './baseScraper.js';
 import { politeDelay } from '../utils/rateLimit.js';
 
@@ -17,7 +17,8 @@ function extractSkuFromUrl(url: string): string {
 
 async function fetchTurnToReviews(
   sku: string,
-  limit = 200
+  limit = 200,
+  onBatch?: BatchCallback
 ): Promise<{ reviews: ScrapedReview[]; rating: number; reviewCount: number; title: string }> {
   // First get the summary for product info + total count
   const summaryUrl = `https://cdn-ws.turnto.com/v5/sitedata/${TURNTO_SITE_KEY}/${sku}/d/review/summary/en_US?`;
@@ -43,6 +44,7 @@ async function fetchTurnToReviews(
   const reviews: ScrapedReview[] = [];
   let offset = 0;
   const pageSize = 50;
+  let batchNumber = 1;
 
   while (reviews.length < limit) {
     const reviewsUrl = `https://cdn-ws.turnto.com/v5/sitedata/${TURNTO_SITE_KEY}/${sku}/d/review/en_US/${offset}/${pageSize}/%7B%7D/RECENT/true/true/?`;
@@ -62,16 +64,30 @@ async function fetchTurnToReviews(
 
     if (!data.reviews || data.reviews.length === 0) break;
 
+    // Collect reviews from this batch
+    const batchReviews: ScrapedReview[] = [];
     for (const r of data.reviews) {
       if (reviews.length >= limit) break;
       const text = r.title ? `${r.title}. ${r.text}` : r.text;
       if (text) {
-        reviews.push({
+        const scrapedReview = {
           text,
           rating: r.rating || 0,
           date: r.dateCreated?.split('T')[0] || '',
-        });
+        };
+        reviews.push(scrapedReview);
+        batchReviews.push(scrapedReview);
       }
+    }
+
+    // Invoke batch callback if provided
+    if (onBatch && batchReviews.length > 0) {
+      onBatch({
+        batchNumber: batchNumber++,
+        reviews: batchReviews,
+        totalFetched: reviews.length,
+        estimatedTotal: totalReviews,
+      });
     }
 
     if (data.reviews.length < pageSize) break;
@@ -94,16 +110,20 @@ export const nikeScraper: ReviewScraper = {
     }
   },
 
-  async scrape(url: string): Promise<ScrapeResult> {
+  async scrape(url: string, onBatch?: BatchCallback): Promise<ScrapeResult> {
     const sku = extractSkuFromUrl(url);
     if (!sku) {
       throw new Error('Could not extract product SKU from Nike URL');
     }
 
     console.log(`  Nike SKU: ${sku}`);
+    console.log(`  Nike URL: ${url}`);
 
     // Try TurnTo API directly first (fast path)
-    const turnToResult = await fetchTurnToReviews(sku);
+    const turnToResult = await fetchTurnToReviews(sku, 200, onBatch);
+
+    console.log(`  Nike TurnTo result: ${turnToResult.reviews.length} reviews found`);
+    console.log(`  Nike product title: ${turnToResult.title}`);
 
     if (turnToResult.reviews.length > 0) {
       // Get product image from the page via Puppeteer (TurnTo doesn't provide it)

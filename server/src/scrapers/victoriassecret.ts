@@ -1,5 +1,5 @@
 import type { HTTPResponse } from 'puppeteer';
-import type { ReviewScraper, ScrapeResult, ScrapedReview } from './types.js';
+import type { ReviewScraper, ScrapeResult, ScrapedReview, BatchCallback } from './types.js';
 import { createFullPage, closePage } from './baseScraper.js';
 import { delay, politeDelay } from '../utils/rateLimit.js';
 
@@ -81,10 +81,12 @@ function extractProductInfo(data: VSReviewResponse): { title: string; imageUrl: 
 async function fetchVSReviews(
   productId: string,
   activeCountry: string,
+  onBatch?: BatchCallback
 ): Promise<ScrapeResult> {
   const allReviews: ScrapedReview[] = [];
   let productInfo = { title: '', imageUrl: '', rating: 0, reviewCount: 0 };
   let offset = 0;
+  let batchNumber = 1;
 
   while (true) {
     const params = new URLSearchParams({
@@ -125,6 +127,16 @@ async function fetchVSReviews(
     allReviews.push(...pageReviews);
     console.log(`  VS: Collected ${allReviews.length}/${productInfo.reviewCount}`);
 
+    // Invoke batch callback if provided
+    if (onBatch && pageReviews.length > 0) {
+      onBatch({
+        batchNumber: batchNumber++,
+        reviews: pageReviews,
+        totalFetched: allReviews.length,
+        estimatedTotal: data.TotalResults,
+      });
+    }
+
     if (allReviews.length >= data.TotalResults) break;
     if (data.Results.length < PAGE_SIZE) break;
 
@@ -151,7 +163,7 @@ export const victoriaSecretScraper: ReviewScraper = {
     }
   },
 
-  async scrape(url: string): Promise<ScrapeResult> {
+  async scrape(url: string, onBatch?: BatchCallback): Promise<ScrapeResult> {
     const page = await createFullPage();
 
     // Intercept network requests to discover the VS product ID
@@ -308,7 +320,7 @@ export const victoriaSecretScraper: ReviewScraper = {
 
       // Now fetch all reviews directly via the API
       console.log(`  VS: Fetching all reviews for productId ${captured.productId} (country: ${captured.activeCountry})...`);
-      const result = await fetchVSReviews(captured.productId, captured.activeCountry);
+      const result = await fetchVSReviews(captured.productId, captured.activeCountry, onBatch);
 
       // Use page meta as fallback for product info
       if (!result.product.title || result.product.title === 'Unknown Product') {

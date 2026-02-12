@@ -11,11 +11,6 @@ export interface ProductVersion {
     rating: number;
     reviewCount: number;
   };
-  reviews: Array<{
-    text: string;
-    rating: number;
-    date: string;
-  }>;
   source: string;
   reviewCount: number;
 }

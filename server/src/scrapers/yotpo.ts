@@ -1,4 +1,4 @@
-import type { ReviewScraper, ScrapeResult, ScrapedReview } from './types.js';
+import type { ReviewScraper, ScrapeResult, ScrapedReview, BatchCallback } from './types.js';
 import { createPage, closePage } from './baseScraper.js';
 import { politeDelay } from '../utils/rateLimit.js';
 
@@ -83,12 +83,14 @@ async function discoverYotpoConfig(url: string): Promise<YotpoConfig> {
 async function fetchYotpoReviews(
   appKey: string,
   productId: string,
-  limit = 200
+  limit = 200,
+  onBatch?: BatchCallback
 ): Promise<{ reviews: ScrapedReview[]; product: { title: string; imageUrl: string; rating: number; reviewCount: number } }> {
   const reviews: ScrapedReview[] = [];
   let page = 1;
   const perPage = 50;
   let productInfo = { title: '', imageUrl: '', rating: 0, reviewCount: 0 };
+  let batchNumber = 1;
 
   while (reviews.length < limit) {
     const apiUrl = `https://api.yotpo.com/v1/widget/${appKey}/products/${productId}/reviews.json?per_page=${perPage}&page=${page}&sort=date&direction=desc`;
@@ -134,15 +136,29 @@ async function fetchYotpoReviews(
       };
     }
 
+    // Collect reviews from this batch
+    const batchReviews: ScrapedReview[] = [];
     for (const review of resp.reviews) {
       if (reviews.length >= limit) break;
       if (review.content) {
-        reviews.push({
+        const scrapedReview = {
           text: review.content,
           rating: review.score || 0,
           date: review.created_at?.split('T')[0] || '',
-        });
+        };
+        reviews.push(scrapedReview);
+        batchReviews.push(scrapedReview);
       }
+    }
+
+    // Invoke batch callback if provided
+    if (onBatch && batchReviews.length > 0) {
+      onBatch({
+        batchNumber: batchNumber++,
+        reviews: batchReviews,
+        totalFetched: reviews.length,
+        estimatedTotal: resp.bottomline?.total_review,
+      });
     }
 
     if (resp.reviews.length < perPage) break;
@@ -165,9 +181,9 @@ export const yotpoScraper: ReviewScraper = {
     }
   },
 
-  async scrape(url: string): Promise<ScrapeResult> {
+  async scrape(url: string, onBatch?: BatchCallback): Promise<ScrapeResult> {
     const config = await discoverYotpoConfig(url);
-    const { reviews, product } = await fetchYotpoReviews(config.appKey, config.productId);
+    const { reviews, product } = await fetchYotpoReviews(config.appKey, config.productId, 200, onBatch);
 
     if (reviews.length === 0) {
       throw new Error('No reviews found for this product');

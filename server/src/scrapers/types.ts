@@ -17,8 +17,17 @@ export interface ScrapeResult {
   source: string;
 }
 
+export interface BatchCallback {
+  (batch: {
+    batchNumber: number;
+    reviews: ScrapedReview[];
+    totalFetched: number;
+    estimatedTotal?: number;
+  }): void;
+}
+
 export interface ReviewScraper {
   name: string;
   canHandle(url: string): boolean;
-  scrape(url: string): Promise<ScrapeResult>;
+  scrape(url: string, onBatch?: BatchCallback): Promise<ScrapeResult>;
 }
