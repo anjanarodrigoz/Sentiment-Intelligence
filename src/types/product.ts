@@ -20,10 +20,14 @@ export interface ProductInput {
   brand: string;
   productUrl: string;
   scrapedReviews: RawReview[] | null;
+  urlHash?: string;
+  selectedVersion?: number;
   scrapeMetadata?: {
     cached: boolean;
     version: number;
     scrapedAt: Date;
+    newReviewCount?: number;
+    urlHash?: string;
   };
 }
 

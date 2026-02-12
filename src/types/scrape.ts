@@ -18,8 +18,40 @@ export interface ScrapeResponse {
   cached?: boolean;
   version?: number;
   scrapedAt?: Date;
+  newReviews?: number;
+  duplicates?: number;
+  isNewVersion?: boolean;
+  urlHash?: string;
 }
 
 export interface ScrapeError {
   error: string;
+}
+
+export interface VersionInfo {
+  version: number;
+  scrapedAt: string;
+  newReviewCount: number;
+  cumulativeReviewCount: number;
+  reviewCount: number;
+  product?: {
+    rating: number;
+    reviewCount: number;
+  };
+}
+
+export interface ProductVersionsResponse {
+  product: {
+    title: string;
+    imageUrl: string;
+    urlHash: string;
+  };
+  versions: VersionInfo[];
+}
+
+export interface VersionedReviewsResponse {
+  reviews: (RawReview & { version: number })[];
+  totalReviews: number;
+  version: number;
+  product: ScrapedProduct;
 }

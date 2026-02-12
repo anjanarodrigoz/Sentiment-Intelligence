@@ -4,6 +4,9 @@ import { normalizeProductUrl, hashUrl } from '../services/urlService.js';
 import { getCachedScrape, storeScrapeResult } from '../services/cacheService.js';
 import { getDB } from '../config/database.js';
 import type { Brand } from '../models/Brand.js';
+import type { Product } from '../models/Product.js';
+import type { ProductVersion } from '../models/ProductVersion.js';
+import type { Review } from '../models/Review.js';
 
 export const scrapeRoute = Router();
 
@@ -27,6 +30,94 @@ scrapeRoute.get('/brands', async (_req, res) => {
   } catch (error) {
     console.error('Failed to fetch brands:', error);
     res.status(500).json({ error: 'Failed to fetch brands' });
+  }
+});
+
+// Get version history for a product
+scrapeRoute.get('/products/:urlHash/versions', async (req, res) => {
+  try {
+    const { urlHash } = req.params;
+    const db = getDB();
+
+    const product = await db.collection<Product>('products').findOne({ urlHash });
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' });
+      return;
+    }
+
+    const versions = await db
+      .collection<ProductVersion>('product_versions')
+      .find({ productId: product._id })
+      .sort({ version: 1 })
+      .project({
+        version: 1,
+        scrapedAt: 1,
+        newReviewCount: 1,
+        cumulativeReviewCount: 1,
+        reviewCount: 1,
+        'product.rating': 1,
+        'product.reviewCount': 1,
+      })
+      .toArray();
+
+    res.json({
+      product: {
+        title: product.title,
+        imageUrl: product.imageUrl,
+        urlHash: product.urlHash,
+      },
+      versions,
+    });
+  } catch (error) {
+    console.error('Failed to fetch versions:', error);
+    res.status(500).json({ error: 'Failed to fetch versions' });
+  }
+});
+
+// Get cumulative reviews up to a specific version
+scrapeRoute.get('/products/:urlHash/reviews', async (req, res) => {
+  try {
+    const { urlHash } = req.params;
+    const upToVersion = parseInt(req.query.upToVersion as string) || undefined;
+    const db = getDB();
+
+    const product = await db.collection<Product>('products').findOne({ urlHash });
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' });
+      return;
+    }
+
+    const query: Record<string, unknown> = { productId: product._id };
+    if (upToVersion) {
+      query.version = { $lte: upToVersion };
+    }
+
+    const reviews = await db
+      .collection<Review>('reviews')
+      .find(query)
+      .sort({ version: 1, createdAt: 1 })
+      .toArray();
+
+    // Get the version metadata for the target version
+    const targetVersion = upToVersion || product.currentVersion;
+    const versionDoc = await db
+      .collection<ProductVersion>('product_versions')
+      .findOne({ productId: product._id, version: targetVersion });
+
+    res.json({
+      reviews: reviews.map(r => ({
+        text: r.text,
+        rating: r.rating,
+        date: r.date,
+        version: r.version,
+      })),
+      totalReviews: reviews.length,
+      version: targetVersion,
+      product: versionDoc?.product,
+    });
+  } catch (error) {
+    console.error('Failed to fetch reviews:', error);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 });
 
@@ -85,14 +176,19 @@ scrapeRoute.post('/scrape', async (req, res) => {
     const result = await scraper.scrape(url);
     console.log(`Scraped ${result.reviews.length} reviews from ${scraper.name}`);
 
-    // Store result in MongoDB
-    await storeScrapeResult(normalizedUrl, urlHash, brand, result);
+    // Store result in MongoDB with hash-based deduplication
+    const storeResult = await storeScrapeResult(normalizedUrl, urlHash, brand, result);
 
-    // Return result with cache metadata
+    // Return result with delta metadata
     res.json({
       ...result,
       cached: false,
       scrapedAt: new Date(),
+      version: storeResult.version,
+      newReviews: storeResult.newReviewCount,
+      duplicates: storeResult.duplicateCount,
+      isNewVersion: storeResult.isNewVersion,
+      urlHash,
     });
   } catch (err) {
     console.error(`Scrape error:`, err);
@@ -190,21 +286,26 @@ scrapeRoute.post('/scrape/stream', async (req, res) => {
 
     console.log(`Streamed ${result.reviews.length} reviews from ${scraper.name}`);
 
-    // Store result in MongoDB
-    await storeScrapeResult(normalizedUrl, urlHash, brand, result);
+    // Send dedup-progress event before storing
+    sendEvent('dedup-progress', {
+      message: `Comparing ${result.reviews.length} reviews against existing data...`,
+      totalScraped: result.reviews.length,
+    });
 
-    // Get the updated product to fetch the new version number
-    const db = getDB();
-    const updatedProduct = await db.collection('products').findOne({ urlHash });
-    const currentVersion = updatedProduct?.currentVersion || 1;
+    // Store result in MongoDB with hash-based deduplication
+    const storeResult = await storeScrapeResult(normalizedUrl, urlHash, brand, result);
 
-    // Send complete event with product info
+    // Send complete event with product info and delta metadata
     sendEvent('complete', {
       product: result.product,
       total: result.reviews.length,
       source: result.source,
       scrapedAt: new Date(),
-      version: currentVersion,
+      version: storeResult.version,
+      newReviews: storeResult.newReviewCount,
+      duplicates: storeResult.duplicateCount,
+      isNewVersion: storeResult.isNewVersion,
+      urlHash,
     });
 
     res.end();

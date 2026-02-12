@@ -7,7 +7,7 @@ export async function connectDB(): Promise<Db> {
   if (db) return db;
 
   const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-  const dbName = process.env.MONGODB_DB_NAME || 'mas_scraper';
+  const dbName = process.env.MONGODB_DB_NAME || "sentiment_intelligence" ;
 
   try {
     client = new MongoClient(uri);
@@ -67,6 +67,10 @@ async function createIndexes(db: Db): Promise<void> {
       { productId: 1, version: 1 }
     );
     await db.collection('reviews').createIndex({ productVersionId: 1 });
+    await db.collection('reviews').createIndex(
+      { productId: 1, reviewHash: 1 },
+      { unique: true }
+    );
 
     // Brands collection indexes
     await db.collection('brands').createIndex({ id: 1 }, { unique: true });

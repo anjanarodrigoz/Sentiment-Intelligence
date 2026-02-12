@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Globe, Loader2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import Button from '../ui/Button';
 import { useScrape } from '../../hooks/useScrape';
 import { useScrapeStream } from '../../hooks/useScrapeStream';
 import ProgressBar from '../ui/ProgressBar';
+import VersionSelector from './VersionSelector';
 import { useAppStore } from '../../store/useAppStore';
 import type { RawReview } from '../../types/review';
 
@@ -45,6 +46,11 @@ export default function UrlReviewInput({
     source: streamSource,
     scrapedAt,
     version: streamVersion,
+    newReviewCount,
+    duplicateCount,
+    isNewVersion,
+    urlHash: streamUrlHash,
+    dedupMessage,
     startStream,
     cancelStream,
   } = useScrapeStream();
@@ -55,6 +61,7 @@ export default function UrlReviewInput({
     version: number;
     scrapedAt: Date;
   } | null>(null);
+  const [currentUrlHash, setCurrentUrlHash] = useState<string | null>(null);
 
   // Track if we've already completed this scrape to prevent infinite loops
   const completedRef = useRef(false);
@@ -77,6 +84,7 @@ export default function UrlReviewInput({
 
       completedRef.current = true;
       setSource(streamSource || '');
+      setCurrentUrlHash(streamUrlHash);
 
       const metadata = scrapedAt && streamVersion
         ? {
@@ -100,7 +108,7 @@ export default function UrlReviewInput({
 
       console.log('[UrlReviewInput] onScrapeComplete called successfully');
     }
-  }, [isComplete, product, allReviews, streamSource, scrapedAt, isCached, streamVersion, productUrl, onScrapeComplete]);
+  }, [isComplete, product, allReviews, streamSource, scrapedAt, isCached, streamVersion, streamUrlHash, productUrl, onScrapeComplete]);
 
   const handleFetch = async (forceRescrape = false) => {
     if (!productUrl || !selectedBrand) return;
@@ -111,6 +119,26 @@ export default function UrlReviewInput({
     // Use streaming for progressive loading
     startStream(productUrl, selectedBrand, forceRescrape);
   };
+
+  const handleVersionSelect = useCallback((data: {
+    reviews: RawReview[];
+    product: { title: string; imageUrl: string; rating: number; reviewCount: number };
+    version: number;
+  }) => {
+    onScrapeComplete({
+      title: data.product.title,
+      imageUrl: data.product.imageUrl,
+      overallRating: data.product.rating,
+      overallReviewCount: data.product.reviewCount,
+      scrapedReviews: data.reviews,
+      productUrl,
+      scrapeMetadata: {
+        cached: true,
+        version: data.version,
+        scrapedAt: new Date(),
+      },
+    });
+  }, [onScrapeComplete, productUrl]);
 
   // Format timestamp for display
   const formatTimestamp = (date: Date): string => {
@@ -139,6 +167,19 @@ export default function UrlReviewInput({
       return false;
     }
   })();
+
+  // Build success message with delta info
+  const getSuccessMessage = () => {
+    if (!scrapedReviews || scrapedReviews.length === 0) return '';
+
+    const base = `Fetched ${scrapedReviews.length} reviews via ${source || 'scraper'}`;
+
+    if (newReviewCount !== null && duplicateCount !== null && duplicateCount > 0) {
+      return `${base} (${newReviewCount} new, ${duplicateCount} already tracked)`;
+    }
+
+    return base;
+  };
 
   return (
     <div className="space-y-3">
@@ -176,11 +217,18 @@ export default function UrlReviewInput({
       {/* Streaming progress */}
       {isStreaming && !isCached && (
         <div className="bg-blue-50 p-3 rounded-lg">
-          <ProgressBar
-            current={progress.current}
-            estimated={progress.estimated}
-            percentage={progress.percentage}
-          />
+          {dedupMessage ? (
+            <div className="flex items-center gap-2 text-sm text-text-secondary">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {dedupMessage}
+            </div>
+          ) : (
+            <ProgressBar
+              current={progress.current}
+              estimated={progress.estimated}
+              percentage={progress.percentage}
+            />
+          )}
         </div>
       )}
 
@@ -196,7 +244,7 @@ export default function UrlReviewInput({
           <CheckCircle className="w-4 h-4 shrink-0 mt-0.5 text-sentiment-positive" />
           <div className="flex-1">
             <div className="text-sentiment-positive font-medium">
-              Fetched {scrapedReviews.length} reviews via {source || 'scraper'}
+              {getSuccessMessage()}
             </div>
             {scrapeMetadata && (
               <div className="text-gray-600 text-xs mt-1">
@@ -205,8 +253,10 @@ export default function UrlReviewInput({
                     Cached (version {scrapeMetadata.version}) •{' '}
                     {formatTimestamp(scrapeMetadata.scrapedAt)}
                   </>
+                ) : isNewVersion ? (
+                  <>Version {scrapeMetadata.version} created • Just now</>
                 ) : (
-                  <>Freshly scraped • Just now</>
+                  <>No new reviews found • Version {scrapeMetadata.version}</>
                 )}
               </div>
             )}
@@ -216,6 +266,15 @@ export default function UrlReviewInput({
             Re-scrape
           </Button>
         </div>
+      )}
+
+      {/* Version selector - shown when product has multiple versions */}
+      {currentUrlHash && scrapeMetadata && !error && (
+        <VersionSelector
+          urlHash={currentUrlHash}
+          currentVersion={scrapeMetadata.version}
+          onVersionSelect={handleVersionSelect}
+        />
       )}
     </div>
   );

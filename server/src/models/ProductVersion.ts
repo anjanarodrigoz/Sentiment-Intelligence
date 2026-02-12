@@ -13,4 +13,6 @@ export interface ProductVersion {
   };
   source: string;
   reviewCount: number;
+  newReviewCount: number;
+  cumulativeReviewCount: number;
 }

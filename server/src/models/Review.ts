@@ -5,6 +5,7 @@ export interface Review {
   productVersionId: ObjectId;
   productId: ObjectId;
   version: number;
+  reviewHash: string;
   text: string;
   rating: number;
   date: string;

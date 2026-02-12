@@ -19,6 +19,11 @@ interface UseScrapeStreamReturn {
   source: string | null;
   scrapedAt: Date | null;
   version: number | null;
+  newReviewCount: number | null;
+  duplicateCount: number | null;
+  isNewVersion: boolean;
+  urlHash: string | null;
+  dedupMessage: string | null;
   startStream: (url: string, brand: string, forceRescrape?: boolean) => void;
   cancelStream: () => void;
 }
@@ -38,6 +43,11 @@ export function useScrapeStream(): UseScrapeStreamReturn {
   const [source, setSource] = useState<string | null>(null);
   const [scrapedAt, setScrapedAt] = useState<Date | null>(null);
   const [version, setVersion] = useState<number | null>(null);
+  const [newReviewCount, setNewReviewCount] = useState<number | null>(null);
+  const [duplicateCount, setDuplicateCount] = useState<number | null>(null);
+  const [isNewVersion, setIsNewVersion] = useState(false);
+  const [urlHash, setUrlHash] = useState<string | null>(null);
+  const [dedupMessage, setDedupMessage] = useState<string | null>(null);
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -61,6 +71,11 @@ export function useScrapeStream(): UseScrapeStreamReturn {
     setSource(null);
     setScrapedAt(null);
     setVersion(null);
+    setNewReviewCount(null);
+    setDuplicateCount(null);
+    setIsNewVersion(false);
+    setUrlHash(null);
+    setDedupMessage(null);
 
     // Cancel any existing stream
     if (eventSourceRef.current) {
@@ -158,6 +173,7 @@ export function useScrapeStream(): UseScrapeStreamReturn {
           cached: boolean;
           version: number;
           scrapedAt: string;
+          urlHash: string;
         };
         setProduct(cacheData.product);
         setAllReviews(cacheData.reviews);
@@ -165,6 +181,7 @@ export function useScrapeStream(): UseScrapeStreamReturn {
         setIsCached(true);
         setScrapedAt(new Date(cacheData.scrapedAt));
         setVersion(cacheData.version);
+        setUrlHash(cacheData.urlHash);
         setProgress({
           current: cacheData.reviews.length,
           estimated: cacheData.reviews.length,
@@ -194,6 +211,15 @@ export function useScrapeStream(): UseScrapeStreamReturn {
         break;
       }
 
+      case 'dedup-progress': {
+        const dedupData = data as {
+          message: string;
+          totalScraped: number;
+        };
+        setDedupMessage(dedupData.message);
+        break;
+      }
+
       case 'complete': {
         const completeData = data as {
           product: ScrapedProduct;
@@ -201,11 +227,20 @@ export function useScrapeStream(): UseScrapeStreamReturn {
           source: string;
           scrapedAt: string;
           version: number;
+          newReviews: number;
+          duplicates: number;
+          isNewVersion: boolean;
+          urlHash: string;
         };
         setProduct(completeData.product);
         setSource(completeData.source);
         setScrapedAt(new Date(completeData.scrapedAt));
         setVersion(completeData.version);
+        setNewReviewCount(completeData.newReviews);
+        setDuplicateCount(completeData.duplicates);
+        setIsNewVersion(completeData.isNewVersion);
+        setUrlHash(completeData.urlHash);
+        setDedupMessage(null);
         setProgress((prev) => ({
           ...prev,
           current: completeData.total,
@@ -249,6 +284,11 @@ export function useScrapeStream(): UseScrapeStreamReturn {
     source,
     scrapedAt,
     version,
+    newReviewCount,
+    duplicateCount,
+    isNewVersion,
+    urlHash,
+    dedupMessage,
     startStream,
     cancelStream,
   };
