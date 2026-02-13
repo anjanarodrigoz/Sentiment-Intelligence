@@ -22,8 +22,6 @@ export default function VersionSelector({
   const {
     versions,
     selectedVersion,
-    reviews,
-    product,
     isLoading,
     error,
     fetchVersions,
@@ -36,16 +34,12 @@ export default function VersionSelector({
     }
   }, [urlHash, fetchVersions]);
 
-  // Notify parent when version reviews are loaded
-  useEffect(() => {
-    if (reviews.length > 0 && product && selectedVersion !== null) {
-      onVersionSelect({
-        reviews,
-        product,
-        version: selectedVersion,
-      });
+  const handleVersionClick = async (version: number) => {
+    const result = await selectVersion(urlHash, version);
+    if (result) {
+      onVersionSelect(result);
     }
-  }, [reviews, product, selectedVersion, onVersionSelect]);
+  };
 
   if (versions.length <= 1) {
     return null;
@@ -80,7 +74,7 @@ export default function VersionSelector({
           return (
             <button
               key={v.version}
-              onClick={() => selectVersion(urlHash, v.version)}
+              onClick={() => handleVersionClick(v.version)}
               disabled={isLoading}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-left text-sm transition-colors ${
                 isSelected

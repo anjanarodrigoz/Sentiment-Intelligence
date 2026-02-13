@@ -3,22 +3,24 @@ import type { RawReview } from '../types/review';
 import type { ScrapedProduct } from '../types/scrape';
 import type { VersionInfo, ProductVersionsResponse, VersionedReviewsResponse } from '../types/scrape';
 
+interface VersionSelectResult {
+  reviews: RawReview[];
+  product: ScrapedProduct;
+  version: number;
+}
+
 interface UseVersionSelectorReturn {
   versions: VersionInfo[];
   selectedVersion: number | null;
-  reviews: RawReview[];
-  product: ScrapedProduct | null;
   isLoading: boolean;
   error: string | null;
   fetchVersions: (urlHash: string) => Promise<void>;
-  selectVersion: (urlHash: string, version: number) => Promise<void>;
+  selectVersion: (urlHash: string, version: number) => Promise<VersionSelectResult | null>;
 }
 
 export function useVersionSelector(): UseVersionSelectorReturn {
   const [versions, setVersions] = useState<VersionInfo[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
-  const [reviews, setReviews] = useState<RawReview[]>([]);
-  const [product, setProduct] = useState<ScrapedProduct | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +44,7 @@ export function useVersionSelector(): UseVersionSelectorReturn {
     }
   }, []);
 
-  const selectVersion = useCallback(async (urlHash: string, version: number) => {
+  const selectVersion = useCallback(async (urlHash: string, version: number): Promise<VersionSelectResult | null> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -54,11 +56,16 @@ export function useVersionSelector(): UseVersionSelectorReturn {
 
       const data: VersionedReviewsResponse = await response.json();
       setSelectedVersion(version);
-      setReviews(data.reviews);
-      setProduct(data.product);
+
+      return {
+        reviews: data.reviews,
+        product: data.product,
+        version,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch reviews';
       setError(message);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -67,8 +74,6 @@ export function useVersionSelector(): UseVersionSelectorReturn {
   return {
     versions,
     selectedVersion,
-    reviews,
-    product,
     isLoading,
     error,
     fetchVersions,

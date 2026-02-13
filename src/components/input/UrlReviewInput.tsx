@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Globe, Loader2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Globe, Loader2, CheckCircle, AlertCircle, RefreshCw, GitCompareArrows } from 'lucide-react';
 import Button from '../ui/Button';
 import { useScrape } from '../../hooks/useScrape';
 import { useScrapeStream } from '../../hooks/useScrapeStream';
@@ -206,7 +206,7 @@ export default function UrlReviewInput({
           {isBusy ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Fetching...
+              {dedupMessage ? 'Comparing...' : 'Fetching...'}
             </>
           ) : (
             'Fetch Reviews'
@@ -216,11 +216,33 @@ export default function UrlReviewInput({
 
       {/* Streaming progress */}
       {isStreaming && !isCached && (
-        <div className="bg-blue-50 p-3 rounded-lg">
+        <div className="bg-blue-50 p-3 rounded-lg space-y-3">
+          {/* Step indicators */}
+          <div className="flex items-center gap-4 text-xs">
+            <div className={`flex items-center gap-1.5 ${dedupMessage ? 'text-sentiment-positive' : 'text-primary font-medium'}`}>
+              {dedupMessage ? (
+                <CheckCircle className="w-3.5 h-3.5" />
+              ) : (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              )}
+              <span>1. Fetching reviews</span>
+            </div>
+            <div className={`flex items-center gap-1.5 ${dedupMessage ? 'text-primary font-medium' : 'text-text-secondary/50'}`}>
+              {dedupMessage ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <GitCompareArrows className="w-3.5 h-3.5" />
+              )}
+              <span>2. Checking for new reviews</span>
+            </div>
+          </div>
+
+          {/* Phase content */}
           {dedupMessage ? (
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {dedupMessage}
+            <div className="flex items-center gap-2.5 py-1">
+              <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="absolute inset-0 bg-primary/60 rounded-full animate-pulse" />
+              </div>
             </div>
           ) : (
             <ProgressBar
