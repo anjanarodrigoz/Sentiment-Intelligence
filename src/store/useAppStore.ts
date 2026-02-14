@@ -11,6 +11,8 @@ interface AppState {
   aggregateAnalysis: ProductAnalysis | null;
   isProcessing: boolean;
   processingProgress: number;
+  analysisMethod: 'vader' | 'llm';
+  llmModel: string;
 
   setBrand: (brand: string) => void;
   setMode: (mode: AnalysisMode) => void;
@@ -20,6 +22,8 @@ interface AppState {
   setAnalyses: (analyses: ProductAnalysis[]) => void;
   setAggregateAnalysis: (analysis: ProductAnalysis | null) => void;
   setProcessing: (isProcessing: boolean, progress?: number) => void;
+  setAnalysisMethod: (method: 'vader' | 'llm') => void;
+  setLlmModel: (model: string) => void;
   reset: () => void;
 }
 
@@ -50,6 +54,8 @@ export const useAppStore = create<AppState>((set) => ({
   aggregateAnalysis: null,
   isProcessing: false,
   processingProgress: 0,
+  analysisMethod: 'vader',
+  llmModel: 'llama3.2',
 
   setBrand: (brand) => set({ selectedBrand: brand }),
 
@@ -80,6 +86,10 @@ export const useAppStore = create<AppState>((set) => ({
   setProcessing: (isProcessing, progress = 0) =>
     set({ isProcessing, processingProgress: progress }),
 
+  setAnalysisMethod: (method) => set({ analysisMethod: method }),
+
+  setLlmModel: (model) => set({ llmModel: model }),
+
   reset: () =>
     set({
       selectedBrand: '',
@@ -90,5 +100,7 @@ export const useAppStore = create<AppState>((set) => ({
       aggregateAnalysis: null,
       isProcessing: false,
       processingProgress: 0,
+      analysisMethod: 'vader',
+      llmModel: 'llama3.2',
     }),
 }));

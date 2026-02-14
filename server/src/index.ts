@@ -4,6 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { scrapeRoute } from './routes/scrape.js';
+import { llmRoute } from './routes/llm.js';
 import { closeBrowser } from './utils/browser.js';
 import { connectDB, closeDB } from './config/database.js';
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use('/brands', express.static(path.join(__dirname, '../public/brands')));
 
 app.use('/api', scrapeRoute);
+app.use('/api/llm', llmRoute);
 
 app.get('/', (_req, res) => {
   res.json({
@@ -29,6 +31,9 @@ app.get('/', (_req, res) => {
     status: 'running',
     endpoints: {
       'POST /api/scrape': 'Scrape reviews from a product URL',
+      'GET /api/llm/status': 'Check Ollama LLM status',
+      'POST /api/llm/analyze': 'Analyze sentiment via local LLM',
+      'POST /api/llm/chat': 'Chat with analysis data via local LLM',
       'GET /api/health': 'Health check',
     },
   });

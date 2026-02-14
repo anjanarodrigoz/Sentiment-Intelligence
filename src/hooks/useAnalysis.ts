@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { parseReviewFile } from '../services/fileParser';
 import { analyzeAllReviews, computeSentimentSummary } from '../services/sentimentAnalyzer';
+import { analyzeReviewsWithLLM } from '../services/llmAnalyzer';
 import { computeAttributeCounts } from '../services/attributeExtractor';
 import { extractKeywords } from '../services/keywordExtractor';
 import { generateSellingPoints } from '../services/sellingPointsGenerator';
@@ -52,8 +53,11 @@ export function useAnalysis() {
       }
       setProcessing(true, Math.round(((i + 0.5) / products.length) * 100));
 
-      // 2. Analyze reviews
-      const analyzedReviews = analyzeAllReviews(rawReviews);
+      // 2. Analyze reviews (VADER or LLM based on user selection)
+      const { analysisMethod, llmModel } = useAppStore.getState();
+      const analyzedReviews = analysisMethod === 'llm'
+        ? await analyzeReviewsWithLLM(rawReviews, llmModel)
+        : analyzeAllReviews(rawReviews);
       setProcessing(true, Math.round(((i + 0.8) / products.length) * 100));
 
       // 3. Compute summaries

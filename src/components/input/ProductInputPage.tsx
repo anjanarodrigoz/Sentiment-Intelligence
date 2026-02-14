@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { useAnalysis } from '../../hooks/useAnalysis';
 import ProductInputCard from './ProductInputCard';
+import AnalysisMethodSelector from './AnalysisMethodSelector';
 import Button from '../ui/Button';
 import { Loader2 } from 'lucide-react';
 
@@ -53,6 +54,8 @@ export default function ProductInputPage() {
           />
         ))}
       </div>
+
+      <AnalysisMethodSelector />
 
       <div className="mt-8 flex justify-center">
         {isProcessing ? (
