@@ -43,9 +43,10 @@ llmRoute.post('/analyze', async (req, res) => {
 
 // Chat with LLM using streaming
 llmRoute.post('/chat', async (req, res) => {
-  const { messages, context, model } = req.body as {
+  const { messages, context, systemPrompt, model } = req.body as {
     messages: ChatMessage[];
-    context: string;
+    context?: string;
+    systemPrompt?: string;
     model?: string;
   };
 
@@ -59,7 +60,7 @@ llmRoute.post('/chat', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const stream = chatStream(messages, context || '', model);
+    const stream = chatStream(messages, systemPrompt || context || '', model);
 
     for await (const token of stream) {
       res.write(`data: ${JSON.stringify({ token })}\n\n`);

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { useAnalysis } from '../../hooks/useAnalysis';
@@ -11,6 +12,7 @@ export default function ProductInputPage() {
   const { mode, products, isProcessing, processingProgress, updateProduct } =
     useAppStore();
   const { runAnalysis } = useAnalysis();
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const allValid = products.every((p) =>
     p.title && (
@@ -20,8 +22,13 @@ export default function ProductInputPage() {
   );
 
   const handleAnalyze = async () => {
-    await runAnalysis();
-    navigate('/dashboard');
+    setAnalysisError(null);
+    try {
+      await runAnalysis();
+      navigate('/dashboard');
+    } catch (err) {
+      setAnalysisError(err instanceof Error ? err.message : 'Analysis failed');
+    }
   };
 
   return (
@@ -57,7 +64,12 @@ export default function ProductInputPage() {
 
       <AnalysisMethodSelector />
 
-      <div className="mt-8 flex justify-center">
+      <div className="mt-8 flex flex-col items-center gap-3">
+        {analysisError && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-lg max-w-md text-center">
+            {analysisError}
+          </div>
+        )}
         {isProcessing ? (
           <div className="flex flex-col items-center gap-3">
             <div className="flex items-center gap-2 text-primary">

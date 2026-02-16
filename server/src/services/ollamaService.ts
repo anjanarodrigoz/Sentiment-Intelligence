@@ -36,14 +36,14 @@ export async function checkStatus(): Promise<{ running: boolean; models: string[
   }
 }
 
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 5;
 
 function buildSentimentPrompt(reviews: ReviewInput[]): string {
   const reviewList = reviews
     .map((r, i) => `Review ${i + 1} (rating: ${r.rating}/5):\n"${r.text}"`)
     .join('\n\n');
 
-  return `You are a sentiment analysis expert. Analyze each review below and return a JSON array with one object per review.
+  return `You are a sentiment analysis expert. Analyze each of the ${reviews.length} reviews below. Return a JSON array with EXACTLY ${reviews.length} objects, one per review in the same order.
 
 Each object must have exactly these fields:
 - "classification": one of "positive", "negative", or "mixed"
@@ -52,6 +52,7 @@ Each object must have exactly these fields:
 - "negativeWords": array of negative words/phrases found in the review
 
 Rules:
+- You MUST return exactly ${reviews.length} objects in the array, one for each review
 - Consider negation: "not good" is negative, "not bad" is positive
 - Consider intensifiers: "very good" is more positive than "good"
 - A review with mixed sentiments should be classified as "mixed"
@@ -59,22 +60,19 @@ Rules:
 
 ${reviewList}
 
-JSON output:`;
+JSON array with exactly ${reviews.length} objects:`;
 }
 
-function parseSentimentResponse(response: string, count: number): SentimentResult[] {
-  // Extract JSON array from response
-  const jsonMatch = response.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    throw new Error('No JSON array found in response');
-  }
+const DEFAULT_SENTIMENT: SentimentResult = {
+  score: 0,
+  comparative: 0,
+  classification: 'mixed',
+  positiveWords: [],
+  negativeWords: [],
+};
 
-  const parsed = JSON.parse(jsonMatch[0]);
-  if (!Array.isArray(parsed) || parsed.length !== count) {
-    throw new Error(`Expected ${count} results, got ${Array.isArray(parsed) ? parsed.length : 'non-array'}`);
-  }
-
-  return parsed.map((item: any) => ({
+function parseSentimentItem(item: any): SentimentResult {
+  return {
     score: typeof item.score === 'number' ? item.score : 0,
     comparative: typeof item.score === 'number' ? item.score : 0,
     classification: ['positive', 'negative', 'mixed'].includes(item.classification)
@@ -82,7 +80,50 @@ function parseSentimentResponse(response: string, count: number): SentimentResul
       : 'mixed',
     positiveWords: Array.isArray(item.positiveWords) ? item.positiveWords : [],
     negativeWords: Array.isArray(item.negativeWords) ? item.negativeWords : [],
-  }));
+  };
+}
+
+function extractArray(response: string): any[] {
+  // 1. Try parsing the whole response as JSON directly
+  try {
+    const direct = JSON.parse(response);
+    if (Array.isArray(direct)) return direct;
+    // Ollama format: 'json' may wrap in an object like { "results": [...] }
+    if (typeof direct === 'object' && direct !== null) {
+      for (const val of Object.values(direct)) {
+        if (Array.isArray(val)) return val;
+      }
+    }
+  } catch {
+    // Not valid JSON as-is, try regex extraction
+  }
+
+  // 2. Extract the first JSON array from the text via bracket matching
+  const start = response.indexOf('[');
+  if (start === -1) throw new Error('No JSON array found in response');
+
+  let depth = 0;
+  for (let i = start; i < response.length; i++) {
+    if (response[i] === '[') depth++;
+    else if (response[i] === ']') depth--;
+    if (depth === 0) {
+      const candidate = response.slice(start, i + 1);
+      return JSON.parse(candidate);
+    }
+  }
+
+  throw new Error('No complete JSON array found in response');
+}
+
+function parseSentimentResponse(response: string, count: number): SentimentResult[] {
+  const parsed = extractArray(response);
+
+  // Map available results and pad with defaults if LLM returned fewer
+  const results: SentimentResult[] = [];
+  for (let i = 0; i < count; i++) {
+    results.push(parsed[i] ? parseSentimentItem(parsed[i]) : { ...DEFAULT_SENTIMENT });
+  }
+  return results;
 }
 
 export async function analyzeSentimentBatch(
@@ -103,7 +144,6 @@ export async function analyzeSentimentBatch(
         prompt,
         stream: false,
         options: { temperature: 0 },
-        format: 'json',
       }),
     });
 
@@ -127,18 +167,12 @@ export interface ChatMessage {
 
 export async function* chatStream(
   messages: ChatMessage[],
-  context: string,
+  systemPrompt: string,
   model: string = DEFAULT_MODEL
 ): AsyncGenerator<string> {
   const systemMessage: ChatMessage = {
     role: 'system',
-    content: `You are an AI assistant for a Consumer Sentiment Intelligence Platform. You help users understand consumer review data and insights.
-
-Here is the analyzed data you should base your answers on:
-
-${context}
-
-Answer questions concisely based on this data. If asked about something not covered in the data, say so. Provide specific numbers and percentages when relevant. Keep responses brief and actionable.`,
+    content: systemPrompt,
   };
 
   const ollamaMessages = [systemMessage, ...messages].map((m) => ({

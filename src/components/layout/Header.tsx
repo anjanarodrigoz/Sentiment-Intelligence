@@ -17,6 +17,20 @@ const BRAND_NAMES: Record<string, string> = {
   other: 'Other',
 };
 
+const BRAND_URLS: Record<string, string> = {
+  nike: 'https://www.nike.com',
+  'under-armour': 'https://www.underarmour.com',
+  nordstrom: 'https://www.nordstrom.com',
+  'the-north-face': 'https://www.thenorthface.com',
+  columbia: 'https://www.columbia.com',
+  'new-balance': 'https://www.newbalance.com',
+  lululemon: 'https://www.lululemon.com',
+  allbirds: 'https://www.allbirds.com',
+  gymshark: 'https://www.gymshark.com',
+  adidas: 'https://www.adidas.com',
+  jcpenney: 'https://www.jcpenney.com',
+};
+
 export default function Header() {
   const navigate = useNavigate();
   const { selectedBrand, mode, reset } = useAppStore();
@@ -41,9 +55,23 @@ export default function Header() {
           </span>
         </button>
         <div className="flex items-center gap-4">
-          {brandName && (
+          {selectedBrand && selectedBrand !== 'other' && (
+            <a
+              href={BRAND_URLS[selectedBrand]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img
+                src={`/brands/${selectedBrand}.png`}
+                alt={brandName}
+                className="h-8 max-w-[120px] object-contain"
+              />
+            </a>
+          )}
+          {selectedBrand === 'other' && (
             <span className="text-sm font-medium text-primary">
-              {brandName}
+              Other
             </span>
           )}
           {mode && (

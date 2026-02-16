@@ -206,10 +206,15 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
           </div>
         )}
         {messages.map((msg, i) => (
-          <ChatMessage key={i} role={msg.role} content={msg.content} />
+          <ChatMessage
+            key={i}
+            role={msg.role}
+            content={msg.content}
+            analyses={msg.role === 'assistant' ? activeAnalyses : undefined}
+          />
         ))}
         {streamingContent && (
-          <ChatMessage role="assistant" content={streamingContent} />
+          <ChatMessage role="assistant" content={streamingContent} analyses={activeAnalyses} />
         )}
         {loading && !streamingContent && (
           <div className="flex items-center gap-2 text-text-secondary text-sm p-3">

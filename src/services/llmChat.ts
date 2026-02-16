@@ -1,6 +1,6 @@
 import type { ProductAnalysis } from '../types/product';
 import type { ChatMessage } from './aiChat';
-import { buildContextSummary } from './chatContext';
+import { buildContextSummary, buildSystemPrompt } from './chatContext';
 
 export async function sendLlmChatMessage(
   messages: ChatMessage[],
@@ -9,6 +9,7 @@ export async function sendLlmChatMessage(
   onToken: (token: string) => void
 ): Promise<string> {
   const context = buildContextSummary(analyses);
+  const systemPrompt = buildSystemPrompt(context);
 
   const response = await fetch('/api/llm/chat', {
     method: 'POST',
@@ -18,7 +19,7 @@ export async function sendLlmChatMessage(
         role: m.role,
         content: m.content,
       })),
-      context,
+      systemPrompt,
       model,
     }),
   });

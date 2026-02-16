@@ -1,5 +1,5 @@
 import type { ProductAnalysis } from '../types/product';
-import { buildContextSummary } from './chatContext';
+import { buildContextSummary, buildSystemPrompt } from './chatContext';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -12,14 +12,7 @@ export async function sendChatMessage(
   apiKey: string
 ): Promise<string> {
   const contextSummary = buildContextSummary(analyses);
-
-  const systemPrompt = `You are an AI assistant for a Consumer Sentiment Intelligence Platform. You help users understand consumer review data and insights.
-
-Here is the analyzed data you should base your answers on:
-
-${contextSummary}
-
-Answer questions concisely based on this data. If asked about something not covered in the data, say so. Provide specific numbers and percentages when relevant. Keep responses brief and actionable.`;
+  const systemPrompt = buildSystemPrompt(contextSummary);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',

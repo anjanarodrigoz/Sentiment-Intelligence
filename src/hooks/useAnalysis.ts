@@ -36,65 +36,70 @@ export function useAnalysis() {
   const runAnalysis = useCallback(async () => {
     setProcessing(true, 0);
 
-    const analyses: ProductAnalysis[] = [];
+    try {
+      const analyses: ProductAnalysis[] = [];
 
-    for (let i = 0; i < products.length; i++) {
-      const product = products[i];
-      setProcessing(true, Math.round(((i + 0.3) / products.length) * 100));
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        setProcessing(true, Math.round(((i + 0.3) / products.length) * 100));
 
-      // 1. Get reviews from file or URL scrape
-      let rawReviews;
-      if (product.inputMode === 'url' && product.scrapedReviews) {
-        rawReviews = product.scrapedReviews;
-      } else if (product.reviewFile) {
-        rawReviews = await parseReviewFile(product.reviewFile);
-      } else {
-        throw new Error(`No review data for "${product.title}"`);
+        // 1. Get reviews from file or URL scrape
+        let rawReviews;
+        if (product.inputMode === 'url' && product.scrapedReviews) {
+          rawReviews = product.scrapedReviews;
+        } else if (product.reviewFile) {
+          rawReviews = await parseReviewFile(product.reviewFile);
+        } else {
+          throw new Error(`No review data for "${product.title}"`);
+        }
+        setProcessing(true, Math.round(((i + 0.5) / products.length) * 100));
+
+        // 2. Analyze reviews (VADER or LLM based on user selection)
+        const { analysisMethod, llmModel } = useAppStore.getState();
+        const analyzedReviews = analysisMethod === 'llm'
+          ? await analyzeReviewsWithLLM(rawReviews, llmModel)
+          : analyzeAllReviews(rawReviews);
+        setProcessing(true, Math.round(((i + 0.8) / products.length) * 100));
+
+        // 3. Compute summaries
+        const sentimentSummary = computeSentimentSummary(analyzedReviews);
+        const attributeCounts = computeAttributeCounts(analyzedReviews);
+        const topKeywords = extractKeywords(analyzedReviews);
+        const topSellingPoints = generateSellingPoints(analyzedReviews);
+        const ratingDistribution = computeRatingDistribution(analyzedReviews);
+
+        // Resolve image URL
+        let imageUrl = product.imageUrl;
+        if (product.imageFile) {
+          imageUrl = URL.createObjectURL(product.imageFile);
+        }
+
+        analyses.push({
+          productId: product.id,
+          title: product.title,
+          imageUrl,
+          overallRating: product.overallRating,
+          overallReviewCount: product.overallReviewCount,
+          reviews: analyzedReviews,
+          sentimentSummary,
+          attributeCounts,
+          ratingDistribution,
+          topSellingPoints,
+          topKeywords,
+        });
       }
-      setProcessing(true, Math.round(((i + 0.5) / products.length) * 100));
 
-      // 2. Analyze reviews (VADER or LLM based on user selection)
-      const { analysisMethod, llmModel } = useAppStore.getState();
-      const analyzedReviews = analysisMethod === 'llm'
-        ? await analyzeReviewsWithLLM(rawReviews, llmModel)
-        : analyzeAllReviews(rawReviews);
-      setProcessing(true, Math.round(((i + 0.8) / products.length) * 100));
+      setAnalyses(analyses);
 
-      // 3. Compute summaries
-      const sentimentSummary = computeSentimentSummary(analyzedReviews);
-      const attributeCounts = computeAttributeCounts(analyzedReviews);
-      const topKeywords = extractKeywords(analyzedReviews);
-      const topSellingPoints = generateSellingPoints(analyzedReviews);
-      const ratingDistribution = computeRatingDistribution(analyzedReviews);
-
-      // Resolve image URL
-      let imageUrl = product.imageUrl;
-      if (product.imageFile) {
-        imageUrl = URL.createObjectURL(product.imageFile);
+      if (mode === 'aggregate') {
+        setAggregateAnalysis(aggregateAnalyses(analyses));
       }
-
-      analyses.push({
-        productId: product.id,
-        title: product.title,
-        imageUrl,
-        overallRating: product.overallRating,
-        overallReviewCount: product.overallReviewCount,
-        reviews: analyzedReviews,
-        sentimentSummary,
-        attributeCounts,
-        ratingDistribution,
-        topSellingPoints,
-        topKeywords,
-      });
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      throw error;
+    } finally {
+      setProcessing(false);
     }
-
-    setAnalyses(analyses);
-
-    if (mode === 'aggregate') {
-      setAggregateAnalysis(aggregateAnalyses(analyses));
-    }
-
-    setProcessing(false);
   }, [products, mode, setAnalyses, setAggregateAnalysis, setProcessing]);
 
   return { runAnalysis };

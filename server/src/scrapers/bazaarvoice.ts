@@ -3,10 +3,7 @@ import { createPage, closePage } from './baseScraper.js';
 import { politeDelay } from '../utils/rateLimit.js';
 
 const BV_DOMAINS = [
-  'underarmour.com',
-  'nordstrom.com',
   'thenorthface.com',
-  'columbia.com',
   'newbalance.com',
 ];
 

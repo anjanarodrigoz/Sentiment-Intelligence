@@ -1,5 +1,8 @@
 import type { ReviewScraper } from './types.js';
 import { nikeScraper } from './nike.js';
+import { underArmourScraper } from './underarmour.js';
+import { nordstromScraper } from './nordstrom.js';
+import { columbiaScraper } from './columbia.js';
 import { bazaarVoiceScraper } from './bazaarvoice.js';
 import { yotpoScraper } from './yotpo.js';
 import { powerReviewsScraper } from './powerreviews.js';
@@ -8,6 +11,9 @@ import { genericScraper } from './generic.js';
 
 const scrapers: ReviewScraper[] = [
   nikeScraper,
+  underArmourScraper,
+  nordstromScraper,
+  columbiaScraper,
   bazaarVoiceScraper,
   yotpoScraper,
   powerReviewsScraper,
@@ -17,10 +23,10 @@ const scrapers: ReviewScraper[] = [
 
 const brandScraperMap: Record<string, ReviewScraper> = {
   nike: nikeScraper,
-  'under-armour': bazaarVoiceScraper,
-  nordstrom: bazaarVoiceScraper,
+  'under-armour': underArmourScraper,
+  nordstrom: nordstromScraper,
   'the-north-face': bazaarVoiceScraper,
-  columbia: bazaarVoiceScraper,
+  columbia: columbiaScraper,
   'new-balance': bazaarVoiceScraper,
   lululemon: yotpoScraper,
   allbirds: yotpoScraper,
