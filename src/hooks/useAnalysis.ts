@@ -45,7 +45,7 @@ export function useAnalysis() {
 
         // 1. Get reviews from file or URL scrape
         let rawReviews;
-        if (product.inputMode === 'url' && product.scrapedReviews) {
+        if ((product.inputMode === 'url' || product.inputMode === 'existing') && product.scrapedReviews) {
           rawReviews = product.scrapedReviews;
         } else if (product.reviewFile) {
           rawReviews = await parseReviewFile(product.reviewFile);

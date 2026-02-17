@@ -1,4 +1,23 @@
-import type { ScrapeResponse } from '../types/scrape';
+import type { ScrapeResponse, ExistingProduct } from '../types/scrape';
+
+export async function fetchExistingProducts(
+  brand: string,
+  search?: string
+): Promise<ExistingProduct[]> {
+  const params = new URLSearchParams({ brand });
+  if (search?.trim()) {
+    params.set('search', search.trim());
+  }
+
+  const response = await fetch(`/api/products?${params}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || `Failed to fetch products: ${response.status}`);
+  }
+
+  return data as ExistingProduct[];
+}
 
 export async function scrapeProductUrl(
   url: string,

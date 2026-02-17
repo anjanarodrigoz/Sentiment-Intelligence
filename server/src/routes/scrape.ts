@@ -33,6 +33,75 @@ scrapeRoute.get('/brands', async (_req, res) => {
   }
 });
 
+// List previously scraped products, optionally filtered by brand and search query
+scrapeRoute.get('/products', async (req, res) => {
+  try {
+    const { brand, search } = req.query;
+    const db = getDB();
+
+    const query: Record<string, unknown> = {};
+    if (brand && typeof brand === 'string') {
+      query.brandId = brand;
+    }
+    if (search && typeof search === 'string' && search.trim()) {
+      query.title = { $regex: search.trim(), $options: 'i' };
+    }
+
+    const products = await db
+      .collection<Product>('products')
+      .find(query)
+      .sort({ updatedAt: -1 })
+      .limit(50)
+      .toArray();
+
+    if (products.length === 0) {
+      res.json([]);
+      return;
+    }
+
+    // Batch-fetch the latest version for each product in a single aggregation
+    const productIds = products.map((p) => p._id!);
+    const latestVersions = await db
+      .collection<ProductVersion>('product_versions')
+      .aggregate([
+        { $match: { productId: { $in: productIds } } },
+        { $sort: { version: -1 } },
+        {
+          $group: {
+            _id: '$productId',
+            cumulativeReviewCount: { $first: '$cumulativeReviewCount' },
+            rating: { $first: '$product.rating' },
+          },
+        },
+      ])
+      .toArray();
+
+    const versionMap = new Map(
+      latestVersions.map((v) => [v._id.toString(), v])
+    );
+
+    const enriched = products.map((p) => {
+      const latest = versionMap.get(p._id!.toString());
+      return {
+        urlHash: p.urlHash,
+        title: p.title,
+        imageUrl: p.imageUrl,
+        url: p.url,
+        brandId: p.brandId,
+        currentVersion: p.currentVersion,
+        updatedAt: p.updatedAt,
+        reviewCount: latest?.cumulativeReviewCount ?? 0,
+        rating: latest?.rating ?? 0,
+      };
+    });
+
+    res.json(enriched);
+  } catch (error) {
+    console.error('Failed to fetch products:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
 // Get version history for a product
 scrapeRoute.get('/products/:urlHash/versions', async (req, res) => {
   try {

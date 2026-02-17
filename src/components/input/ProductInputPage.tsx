@@ -17,7 +17,8 @@ export default function ProductInputPage() {
   const allValid = products.every((p) =>
     p.title && (
       (p.inputMode === 'file' && p.reviewFile) ||
-      (p.inputMode === 'url' && p.scrapedReviews && p.scrapedReviews.length > 0)
+      (p.inputMode === 'url' && p.scrapedReviews && p.scrapedReviews.length > 0) ||
+      (p.inputMode === 'existing' && p.scrapedReviews && p.scrapedReviews.length > 0)
     )
   );
 

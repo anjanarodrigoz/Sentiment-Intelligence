@@ -28,6 +28,18 @@ export interface ScrapeError {
   error: string;
 }
 
+export interface ExistingProduct {
+  urlHash: string;
+  title: string;
+  imageUrl: string;
+  url: string;
+  brandId: string;
+  currentVersion: number;
+  updatedAt: string;
+  reviewCount: number;
+  rating: number;
+}
+
 export interface VersionInfo {
   version: number;
   scrapedAt: string;
