@@ -5,6 +5,7 @@ import { nordstromScraper } from './nordstrom.js';
 import { columbiaScraper } from './columbia.js';
 import { theNorthFaceScraper } from './thenorthface.js';
 import { lululemonScraper } from './lululemon.js';
+import { adidasScraper } from './adidas.js';
 import { bazaarVoiceScraper } from './bazaarvoice.js';
 import { yotpoScraper } from './yotpo.js';
 import { powerReviewsScraper } from './powerreviews.js';
@@ -18,6 +19,7 @@ const scrapers: ReviewScraper[] = [
   columbiaScraper,
   theNorthFaceScraper,
   lululemonScraper,
+  adidasScraper,
   bazaarVoiceScraper,
   yotpoScraper,
   powerReviewsScraper,
@@ -35,7 +37,7 @@ const brandScraperMap: Record<string, ReviewScraper> = {
   lululemon: lululemonScraper,
   allbirds: yotpoScraper,
   gymshark: yotpoScraper,
-  adidas: powerReviewsScraper,
+  adidas: adidasScraper,
   jcpenney: powerReviewsScraper,
   'victorias-secret': victoriaSecretScraper,
   other: genericScraper,

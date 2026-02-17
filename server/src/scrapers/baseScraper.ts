@@ -1,5 +1,5 @@
 import type { Page } from 'puppeteer';
-import { getBrowser } from '../utils/browser.js';
+import { getBrowser, getStealthBrowser } from '../utils/browser.js';
 import { getRandomUserAgent } from '../utils/userAgent.js';
 
 export async function createPage(): Promise<Page> {
@@ -32,6 +32,19 @@ export async function createFullPage(): Promise<Page> {
   const page = await browser.newPage();
 
   await page.setUserAgent(getRandomUserAgent());
+  await page.setViewport({ width: 1280, height: 800 });
+
+  return page;
+}
+
+/**
+ * Creates a stealth page using puppeteer-extra-plugin-stealth.
+ * Required for sites with aggressive bot detection (e.g. Adidas/Akamai).
+ */
+export async function createStealthPage(): Promise<Page> {
+  const browser = await getStealthBrowser();
+  const page = await browser.newPage() as Page;
+
   await page.setViewport({ width: 1280, height: 800 });
 
   return page;

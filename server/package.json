@@ -15,7 +15,9 @@
     "dotenv": "^17.2.4",
     "express": "^5.1.0",
     "mongodb": "^7.1.0",
-    "puppeteer": "^24.9.0"
+    "puppeteer": "^24.9.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.18",

@@ -3,7 +3,6 @@ import { createPage, closePage } from './baseScraper.js';
 import { politeDelay } from '../utils/rateLimit.js';
 
 const PR_DOMAINS = [
-  'adidas.com',
   'jcpenney.com',
 ];
 
