@@ -10,6 +10,28 @@ import type { Review } from '../models/Review.js';
 
 export const scrapeRoute = Router();
 
+/**
+ * @swagger
+ * /api/brands:
+ *   get:
+ *     summary: List all active brands
+ *     tags: [Brands]
+ *     responses:
+ *       200:
+ *         description: Array of active brands
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Brand'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 scrapeRoute.get('/brands', async (_req, res) => {
   try {
     const db = getDB();
@@ -33,7 +55,39 @@ scrapeRoute.get('/brands', async (_req, res) => {
   }
 });
 
-// List previously scraped products, optionally filtered by brand and search query
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: List previously scraped products
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: brand
+ *         schema:
+ *           type: string
+ *         description: Filter by brand ID
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by product title (case-insensitive)
+ *     responses:
+ *       200:
+ *         description: Array of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 scrapeRoute.get('/products', async (req, res) => {
   try {
     const { brand, search } = req.query;
@@ -102,7 +156,53 @@ scrapeRoute.get('/products', async (req, res) => {
   }
 });
 
-// Get version history for a product
+/**
+ * @swagger
+ * /api/products/{urlHash}/versions:
+ *   get:
+ *     summary: Get version history for a product
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: urlHash
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product URL hash
+ *     responses:
+ *       200:
+ *         description: Product info with version history
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                     imageUrl:
+ *                       type: string
+ *                     urlHash:
+ *                       type: string
+ *                 versions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ProductVersion'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 scrapeRoute.get('/products/:urlHash/versions', async (req, res) => {
   try {
     const { urlHash } = req.params;
@@ -143,7 +243,65 @@ scrapeRoute.get('/products/:urlHash/versions', async (req, res) => {
   }
 });
 
-// Get cumulative reviews up to a specific version
+/**
+ * @swagger
+ * /api/products/{urlHash}/reviews:
+ *   get:
+ *     summary: Get reviews for a product
+ *     description: Returns all reviews up to a specific version. If no version is specified, returns all reviews.
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: urlHash
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product URL hash
+ *       - in: query
+ *         name: upToVersion
+ *         schema:
+ *           type: integer
+ *         description: Return reviews up to this version number
+ *     responses:
+ *       200:
+ *         description: Reviews with product metadata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 reviews:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Review'
+ *                 totalReviews:
+ *                   type: integer
+ *                 version:
+ *                   type: integer
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                     imageUrl:
+ *                       type: string
+ *                     rating:
+ *                       type: number
+ *                     reviewCount:
+ *                       type: integer
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 scrapeRoute.get('/products/:urlHash/reviews', async (req, res) => {
   try {
     const { urlHash } = req.params;
@@ -190,7 +348,45 @@ scrapeRoute.get('/products/:urlHash/reviews', async (req, res) => {
   }
 });
 
-// Delete a product and all its versions and reviews
+/**
+ * @swagger
+ * /api/products/{urlHash}:
+ *   delete:
+ *     summary: Delete a product and all its data
+ *     description: Cascade deletes all reviews, version history, and the product record.
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: urlHash
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product URL hash
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 title:
+ *                   type: string
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 scrapeRoute.delete('/products/:urlHash', async (req, res) => {
   try {
     const { urlHash } = req.params;
@@ -215,6 +411,39 @@ scrapeRoute.delete('/products/:urlHash', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/scrape:
+ *   post:
+ *     summary: Scrape product reviews
+ *     description: Scrapes reviews from a product URL. Returns cached results if available unless forceRescrape is true.
+ *     tags: [Scraping]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ScrapeRequest'
+ *     responses:
+ *       200:
+ *         description: Scrape result with reviews and metadata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ScrapeResponse'
+ *       400:
+ *         description: Invalid URL, missing brand, or unsupported brand
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Scraping error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 scrapeRoute.post('/scrape', async (req, res) => {
   const { url, brand, forceRescrape = false } = req.body;
 
@@ -291,6 +520,36 @@ scrapeRoute.post('/scrape', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/scrape/stream:
+ *   post:
+ *     summary: Scrape product reviews with SSE streaming
+ *     description: |
+ *       Scrapes reviews and streams progress via Server-Sent Events.
+ *       Events: `cache-hit`, `batch`, `progress`, `dedup-progress`, `complete`, `error`.
+ *     tags: [Scraping]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ScrapeRequest'
+ *     responses:
+ *       200:
+ *         description: SSE event stream
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               description: Server-Sent Events stream with batch, progress, and complete events
+ *       400:
+ *         description: Invalid URL, missing brand, or unsupported brand
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 scrapeRoute.post('/scrape/stream', async (req, res) => {
   const { url, brand, forceRescrape = false } = req.body;
 

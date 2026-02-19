@@ -4,7 +4,45 @@ import type { ChatMessage } from '../services/ollamaService.js';
 
 export const llmRoute = Router();
 
-// Check Ollama status and available models
+/**
+ * @swagger
+ * /api/llm/status:
+ *   get:
+ *     summary: Check Ollama LLM status
+ *     tags: [LLM]
+ *     responses:
+ *       200:
+ *         description: Ollama status and available models
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 running:
+ *                   type: boolean
+ *                 models:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Ollama not reachable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 running:
+ *                   type: boolean
+ *                   example: false
+ *                 models:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 error:
+ *                   type: string
+ */
 llmRoute.get('/status', async (_req, res) => {
   try {
     const status = await checkStatus();
@@ -14,7 +52,67 @@ llmRoute.get('/status', async (_req, res) => {
   }
 });
 
-// Analyze reviews with LLM sentiment
+/**
+ * @swagger
+ * /api/llm/analyze:
+ *   post:
+ *     summary: Analyze review sentiment with LLM
+ *     tags: [LLM]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AnalyzeRequest'
+ *     responses:
+ *       200:
+ *         description: Sentiment analysis results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       score:
+ *                         type: number
+ *                         description: Sentiment score from -1 to 1
+ *                       comparative:
+ *                         type: number
+ *                       classification:
+ *                         type: string
+ *                         enum: [positive, negative, mixed]
+ *                       positiveWords:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       negativeWords:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                 model:
+ *                   type: string
+ *                 duration:
+ *                   type: integer
+ *                   description: Processing time in ms
+ *                 count:
+ *                   type: integer
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: LLM error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 llmRoute.post('/analyze', async (req, res) => {
   const { reviews, model } = req.body;
 
@@ -41,7 +139,36 @@ llmRoute.post('/analyze', async (req, res) => {
   }
 });
 
-// Chat with LLM using streaming
+/**
+ * @swagger
+ * /api/llm/chat:
+ *   post:
+ *     summary: Chat with LLM (SSE streaming)
+ *     description: |
+ *       Sends messages to the LLM and streams the response via Server-Sent Events.
+ *       Each event contains a `token` field. The stream ends with a `[DONE]` message.
+ *     tags: [LLM]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ChatRequest'
+ *     responses:
+ *       200:
+ *         description: SSE token stream
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               description: "SSE stream of {token: string} objects, ending with [DONE]"
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 llmRoute.post('/chat', async (req, res) => {
   const { messages, context, systemPrompt, model } = req.body as {
     messages: ChatMessage[];
