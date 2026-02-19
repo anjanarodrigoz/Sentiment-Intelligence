@@ -16,6 +16,7 @@ interface UseExistingProductsReturn {
     product: ScrapedProduct;
     version: number;
   } | null>;
+  deleteProduct: (urlHash: string) => Promise<boolean>;
   isSelecting: boolean;
 }
 
@@ -37,6 +38,21 @@ export function useExistingProducts(): UseExistingProductsReturn {
       setError(message);
     } finally {
       setIsLoading(false);
+    }
+  }, []);
+
+  const deleteProduct = useCallback(async (urlHash: string) => {
+    try {
+      const response = await fetch(`/api/products/${urlHash}`, { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
+      setProducts((prev) => prev.filter((p) => p.urlHash !== urlHash));
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete product';
+      setError(message);
+      return false;
     }
   }, []);
 
@@ -73,6 +89,7 @@ export function useExistingProducts(): UseExistingProductsReturn {
     setSearchQuery,
     fetchProducts,
     selectProduct,
+    deleteProduct,
     isSelecting,
   };
 }

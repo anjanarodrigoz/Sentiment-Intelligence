@@ -190,6 +190,31 @@ scrapeRoute.get('/products/:urlHash/reviews', async (req, res) => {
   }
 });
 
+// Delete a product and all its versions and reviews
+scrapeRoute.delete('/products/:urlHash', async (req, res) => {
+  try {
+    const { urlHash } = req.params;
+    const db = getDB();
+
+    const product = await db.collection<Product>('products').findOne({ urlHash });
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' });
+      return;
+    }
+
+    // Delete reviews, versions, then the product itself
+    await db.collection<Review>('reviews').deleteMany({ productId: product._id });
+    await db.collection<ProductVersion>('product_versions').deleteMany({ productId: product._id });
+    await db.collection<Product>('products').deleteOne({ _id: product._id });
+
+    console.log(`Deleted product "${product.title}" (${urlHash}) and all associated data`);
+    res.json({ success: true, title: product.title });
+  } catch (error) {
+    console.error('Failed to delete product:', error);
+    res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
 scrapeRoute.post('/scrape', async (req, res) => {
   const { url, brand, forceRescrape = false } = req.body;
 

@@ -38,18 +38,12 @@ export default function AnalysisDashboard() {
         overallReviewCount={analysis.overallReviewCount}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="space-y-6">
-          <SentimentChart data={analysis.sentimentSummary} />
-          <RatingsDistribution data={analysis.ratingDistribution} />
-        </div>
-        <div className="space-y-6">
-          <TopSellingPoints points={analysis.topSellingPoints} />
-          <KeywordCloud words={analysis.topKeywords} />
-        </div>
-        <div>
-          <AttributesChart data={analysis.attributeCounts} />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        <SentimentChart data={analysis.sentimentSummary} compact />
+        <AttributesChart data={analysis.attributeCounts} compact />
+        <TopSellingPoints points={analysis.topSellingPoints} compact />
+        <KeywordCloud words={analysis.topKeywords} compact />
+        <RatingsDistribution data={analysis.ratingDistribution} compact />
       </div>
 
       <ReviewList reviews={analysis.reviews} />

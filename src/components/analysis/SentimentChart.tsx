@@ -14,6 +14,37 @@ const COLORS = {
   mixed: '#f97316',
 };
 
+function renderPercentageLabel(props: {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  percent: number;
+}) {
+  const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  if (percent < 0.05) return null;
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#fff"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={11}
+      fontWeight={600}
+    >
+      {`${Math.round(percent * 100)}%`}
+    </text>
+  );
+}
+
 export default function SentimentChart({ data, compact }: SentimentChartProps) {
   const chartData = [
     { name: 'Positive', value: data.positive, fill: COLORS.positive },
@@ -21,11 +52,11 @@ export default function SentimentChart({ data, compact }: SentimentChartProps) {
     { name: 'Mixed', value: data.mixed, fill: COLORS.mixed },
   ].filter((d) => d.value > 0);
 
-  const size = compact ? 140 : 200;
+  const size = compact ? 140 : 180;
 
   return (
     <Card className={cn(compact && 'p-4')}>
-      <h4 className={cn('font-semibold mb-3', compact ? 'text-sm' : 'text-base')}>
+      <h4 className={cn('font-semibold mb-3 text-center', compact ? 'text-sm' : 'text-base')}>
         Sentiment
       </h4>
       <div className="flex flex-col items-center">
@@ -36,11 +67,13 @@ export default function SentimentChart({ data, compact }: SentimentChartProps) {
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={compact ? 35 : 55}
-                outerRadius={compact ? 60 : 85}
+                innerRadius={compact ? 30 : 45}
+                outerRadius={compact ? 55 : 80}
                 dataKey="value"
                 strokeWidth={2}
                 stroke="#fff"
+                label={renderPercentageLabel}
+                labelLine={false}
               >
                 {chartData.map((entry) => (
                   <Cell key={entry.name} fill={entry.fill} />
@@ -51,32 +84,24 @@ export default function SentimentChart({ data, compact }: SentimentChartProps) {
               />
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className={cn('font-bold', compact ? 'text-lg' : 'text-2xl')}>
-                {data.total}
-              </div>
-              <div className="text-xs text-text-secondary">reviews</div>
-            </div>
-          </div>
         </div>
-        <div className="flex gap-4 mt-3">
+        <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-3">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-sentiment-positive" />
+            <div className="w-2.5 h-2.5 rounded-full bg-sentiment-positive" />
             <span className="text-xs text-text-secondary">
-              Positive {data.positive}
+              Positive: {data.positive.toLocaleString()}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-sentiment-negative" />
+            <div className="w-2.5 h-2.5 rounded-full bg-sentiment-negative" />
             <span className="text-xs text-text-secondary">
-              Negative {data.negative}
+              Negative: {data.negative.toLocaleString()}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-sentiment-mixed" />
+            <div className="w-2.5 h-2.5 rounded-full bg-sentiment-mixed" />
             <span className="text-xs text-text-secondary">
-              Mixed {data.mixed}
+              Mixed: {data.mixed.toLocaleString()}
             </span>
           </div>
         </div>

@@ -50,7 +50,7 @@ export default function KeywordCloud({ words, compact }: KeywordCloudProps) {
 
   return (
     <Card className={cn(compact && 'p-4')}>
-      <h4 className={cn('font-semibold mb-3', compact ? 'text-sm' : 'text-base')}>
+      <h4 className={cn('font-semibold mb-3 text-center', compact ? 'text-sm' : 'text-base')}>
         Keywords
       </h4>
       {shuffled.length === 0 ? (

@@ -6,6 +6,10 @@ import { columbiaScraper } from './columbia.js';
 import { theNorthFaceScraper } from './thenorthface.js';
 import { lululemonScraper } from './lululemon.js';
 import { adidasScraper } from './adidas.js';
+import { amazonScraper } from './amazon.js';
+import { aliexpressScraper } from './aliexpress.js';
+import { alibabaScraper } from './alibaba.js';
+import { ebayScraper } from './ebay.js';
 import { bazaarVoiceScraper } from './bazaarvoice.js';
 import { yotpoScraper } from './yotpo.js';
 import { powerReviewsScraper } from './powerreviews.js';
@@ -20,6 +24,10 @@ const scrapers: ReviewScraper[] = [
   theNorthFaceScraper,
   lululemonScraper,
   adidasScraper,
+  amazonScraper,
+  aliexpressScraper,
+  alibabaScraper,
+  ebayScraper,
   bazaarVoiceScraper,
   yotpoScraper,
   powerReviewsScraper,
@@ -38,6 +46,10 @@ const brandScraperMap: Record<string, ReviewScraper> = {
   allbirds: yotpoScraper,
   gymshark: yotpoScraper,
   adidas: adidasScraper,
+  amazon: amazonScraper,
+  aliexpress: aliexpressScraper,
+  alibaba: alibabaScraper,
+  ebay: ebayScraper,
   jcpenney: powerReviewsScraper,
   'victorias-secret': victoriaSecretScraper,
   other: genericScraper,
@@ -63,6 +75,10 @@ export function getSupportedBrands(): { id: string; name: string; logo: string }
     { id: 'allbirds', name: 'Allbirds', logo: '/brands/allbirds.png' },
     { id: 'gymshark', name: 'Gymshark', logo: '/brands/gymshark.png' },
     { id: 'adidas', name: 'Adidas', logo: '/brands/adidas.png' },
+    { id: 'amazon', name: 'Amazon', logo: '/brands/amazon.png' },
+    { id: 'aliexpress', name: 'AliExpress', logo: '/brands/aliexpress.png' },
+    { id: 'alibaba', name: 'Alibaba', logo: '/brands/alibaba.png' },
+    { id: 'ebay', name: 'eBay', logo: '/brands/ebay.png' },
     { id: 'jcpenney', name: 'JCPenney', logo: '/brands/jcpenney.png' },
     { id: 'victorias-secret', name: "Victoria's Secret", logo: '/brands/victorias-secret.png' },
     { id: 'other', name: 'Other', logo: '' },

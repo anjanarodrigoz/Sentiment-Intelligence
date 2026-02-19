@@ -15,7 +15,7 @@ export default function TopSellingPoints({ points, compact }: TopSellingPointsPr
 
   return (
     <Card className={cn(compact && 'p-4')}>
-      <h4 className={cn('font-semibold mb-3', compact ? 'text-sm' : 'text-base')}>
+      <h4 className={cn('font-semibold mb-3 text-center', compact ? 'text-sm' : 'text-base')}>
         Top Selling Points
       </h4>
 

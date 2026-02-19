@@ -1,10 +1,11 @@
-import { useEffect, useCallback } from 'react';
-import { Search, Loader2, Package, AlertCircle, Star, Clock, CheckCircle, RefreshCw } from 'lucide-react';
+import { useEffect, useCallback, useState } from 'react';
+import { Search, Loader2, Package, AlertCircle, Star, Clock, CheckCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { useExistingProducts } from '../../hooks/useExistingProducts';
 import { useAppStore } from '../../store/useAppStore';
 import { useScrapeStream } from '../../hooks/useScrapeStream';
 import VersionSelector from './VersionSelector';
 import Button from '../ui/Button';
+import ConfirmDialog from '../ui/ConfirmDialog';
 import { cn } from '../../lib/utils';
 import type { RawReview } from '../../types/review';
 
@@ -36,6 +37,7 @@ export default function ExistingProductSelector({
   scrapedReviews,
   productUrl,
 }: ExistingProductSelectorProps) {
+  const [productToDelete, setProductToDelete] = useState<{ urlHash: string; title: string } | null>(null);
   const { selectedBrand } = useAppStore();
   const {
     products,
@@ -45,6 +47,7 @@ export default function ExistingProductSelector({
     setSearchQuery,
     fetchProducts,
     selectProduct,
+    deleteProduct,
     isSelecting,
   } = useExistingProducts();
 
@@ -256,43 +259,57 @@ export default function ExistingProductSelector({
       {!isLoading && products.length > 0 && (
         <div className="max-h-64 overflow-y-auto space-y-2 border border-border rounded-lg p-2">
           {products.map((product) => (
-            <button
+            <div
               key={product.urlHash}
-              onClick={() => handleSelect(product.urlHash, product.url)}
-              disabled={isSelecting}
-              className="w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors hover:bg-gray-50 border border-transparent"
+              className="flex items-center gap-1"
             >
-              {product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={product.title}
-                  className="w-10 h-10 rounded-md object-cover border border-border"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center">
-                  <Package className="w-5 h-5 text-text-secondary" />
+              <button
+                onClick={() => handleSelect(product.urlHash, product.url)}
+                disabled={isSelecting}
+                className="flex-1 flex items-center gap-3 p-3 rounded-lg text-left transition-colors hover:bg-gray-50 border border-transparent"
+              >
+                {product.imageUrl ? (
+                  <img
+                    src={product.imageUrl}
+                    alt={product.title}
+                    className="w-10 h-10 rounded-md object-cover border border-border"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center">
+                    <Package className="w-5 h-5 text-text-secondary" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-text-primary truncate">
+                    {product.title}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-text-secondary mt-0.5">
+                    <span className="flex items-center gap-1">
+                      <Star className="w-3 h-3" />
+                      {product.rating.toFixed(1)}
+                    </span>
+                    <span>{product.reviewCount} reviews</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatDate(product.updatedAt)}
+                    </span>
+                  </div>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-text-primary truncate">
-                  {product.title}
-                </div>
-                <div className="flex items-center gap-3 text-xs text-text-secondary mt-0.5">
-                  <span className="flex items-center gap-1">
-                    <Star className="w-3 h-3" />
-                    {product.rating.toFixed(1)}
-                  </span>
-                  <span>{product.reviewCount} reviews</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatDate(product.updatedAt)}
-                  </span>
-                </div>
-              </div>
-              <span className="text-xs text-text-secondary font-mono">
-                v{product.currentVersion}
-              </span>
-            </button>
+                <span className="text-xs text-text-secondary font-mono">
+                  v{product.currentVersion}
+                </span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setProductToDelete({ urlHash: product.urlHash, title: product.title });
+                }}
+                className="p-2 rounded-lg text-text-secondary hover:text-sentiment-negative hover:bg-red-50 transition-colors shrink-0"
+                title="Delete product"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -304,6 +321,26 @@ export default function ExistingProductSelector({
           Loading product reviews...
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!productToDelete}
+        title={`Delete "${productToDelete?.title}"?`}
+        description="This will permanently remove the following data:"
+        items={[
+          'All scraped reviews for this product',
+          'All version history and snapshots',
+          'The product record itself',
+        ]}
+        confirmLabel="Delete Product"
+        variant="danger"
+        onConfirm={() => {
+          if (productToDelete) {
+            deleteProduct(productToDelete.urlHash);
+            setProductToDelete(null);
+          }
+        }}
+        onCancel={() => setProductToDelete(null)}
+      />
     </div>
   );
 }
