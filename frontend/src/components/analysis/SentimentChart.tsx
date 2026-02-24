@@ -14,14 +14,8 @@ const COLORS = {
   mixed: '#f97316',
 };
 
-function renderPercentageLabel(props: {
-  cx: number;
-  cy: number;
-  midAngle: number;
-  innerRadius: number;
-  outerRadius: number;
-  percent: number;
-}) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderPercentageLabel(props: any) {
   const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;

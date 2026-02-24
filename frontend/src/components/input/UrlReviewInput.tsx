@@ -34,7 +34,7 @@ export default function UrlReviewInput({
   onScrapeComplete,
 }: UrlReviewInputProps) {
   const { selectedBrand } = useAppStore();
-  const { isLoading, error: fetchError, scrape } = useScrape();
+  const { isLoading, error: fetchError } = useScrape();
   const {
     isStreaming,
     progress,
@@ -52,7 +52,7 @@ export default function UrlReviewInput({
     urlHash: streamUrlHash,
     dedupMessage,
     startStream,
-    cancelStream,
+    cancelStream: _cancelStream,
   } = useScrapeStream();
 
   const [source, setSource] = useState<string>('');

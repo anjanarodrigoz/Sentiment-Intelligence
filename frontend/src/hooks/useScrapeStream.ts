@@ -82,18 +82,7 @@ export function useScrapeStream(): UseScrapeStreamReturn {
       eventSourceRef.current.close();
     }
 
-    // Create SSE connection
-    const params = new URLSearchParams({
-      url,
-      brand,
-      forceRescrape: String(forceRescrape),
-    });
-
-    // Use POST data for SSE - we'll use a regular POST request to initiate
-    // Since EventSource doesn't support POST, we'll need to use query params
-    // or implement a different approach
-
-    // For now, let's use a fetch-based streaming approach
+    // Fetch-based SSE streaming (POST with JSON body)
     const controller = new AbortController();
 
     fetch('/api/scrape/stream', {

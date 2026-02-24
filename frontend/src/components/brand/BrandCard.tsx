@@ -10,7 +10,6 @@ interface BrandCardProps {
 }
 
 export default function BrandCard({
-  id,
   name,
   logo,
   selected,

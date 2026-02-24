@@ -1,5 +1,5 @@
 {
-  "name": "mas-server",
+  "name": "mas-backend",
   "private": true,
   "version": "0.0.0",
   "type": "module",

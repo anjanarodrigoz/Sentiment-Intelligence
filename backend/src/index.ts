@@ -16,7 +16,7 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-const PORT = 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 
 app.use(cors());
 app.use(express.json());
@@ -87,6 +87,20 @@ app.get('/', (_req, res) => {
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
+
+// In production, serve the frontend build and handle SPA routing
+if (process.env.NODE_ENV === 'production') {
+  const clientDistPath = path.join(__dirname, '../../dist');
+  app.use(express.static(clientDistPath));
+
+  // SPA fallback — send index.html for non-API routes
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/brands') || req.path.startsWith('/api-docs')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 // Connect to MongoDB before starting server
 await connectDB();

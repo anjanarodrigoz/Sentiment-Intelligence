@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { Search, Loader2, Package, AlertCircle, Star, Clock, CheckCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { useExistingProducts } from '../../hooks/useExistingProducts';
 import { useAppStore } from '../../store/useAppStore';
@@ -38,6 +38,8 @@ export default function ExistingProductSelector({
   productUrl,
 }: ExistingProductSelectorProps) {
   const [productToDelete, setProductToDelete] = useState<{ urlHash: string; title: string } | null>(null);
+  const onProductSelectRef = useRef(onProductSelect);
+  useEffect(() => { onProductSelectRef.current = onProductSelect; });
   const { selectedBrand } = useAppStore();
   const {
     products,
@@ -82,7 +84,7 @@ export default function ExistingProductSelector({
   // Handle re-scrape stream completion
   useEffect(() => {
     if (streamComplete && streamProduct && streamReviews.length > 0 && streamUrlHash) {
-      onProductSelect({
+      onProductSelectRef.current({
         title: streamProduct.title,
         imageUrl: streamProduct.imageUrl,
         overallRating: streamProduct.rating,
@@ -97,12 +99,12 @@ export default function ExistingProductSelector({
         },
       });
     }
-  }, [streamComplete, streamProduct, streamReviews, streamUrlHash, streamVersion, streamScrapedAt, productUrl, onProductSelect]);
+  }, [streamComplete, streamProduct, streamReviews, streamUrlHash, streamVersion, streamScrapedAt, productUrl]);
 
   const handleSelect = useCallback(async (urlHash: string, url: string) => {
     const result = await selectProduct(urlHash);
     if (result) {
-      onProductSelect({
+      onProductSelectRef.current({
         title: result.product.title,
         imageUrl: result.product.imageUrl,
         overallRating: result.product.rating,
@@ -117,7 +119,7 @@ export default function ExistingProductSelector({
         },
       });
     }
-  }, [selectProduct, onProductSelect]);
+  }, [selectProduct]);
 
   const handleRescrape = useCallback(() => {
     if (productUrl && selectedBrand) {
@@ -131,7 +133,7 @@ export default function ExistingProductSelector({
     version: number;
   }) => {
     if (!selectedUrlHash) return;
-    onProductSelect({
+    onProductSelectRef.current({
       title: data.product.title,
       imageUrl: data.product.imageUrl,
       overallRating: data.product.rating,
@@ -145,7 +147,7 @@ export default function ExistingProductSelector({
         scrapedAt: new Date(),
       },
     });
-  }, [selectedUrlHash, productUrl, onProductSelect]);
+  }, [selectedUrlHash, productUrl]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -182,7 +184,7 @@ export default function ExistingProductSelector({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => onProductSelect({
+              onClick={() => onProductSelectRef.current({
                 title: '',
                 imageUrl: '',
                 overallRating: 0,
