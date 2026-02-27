@@ -10,7 +10,7 @@
 
 services:
   app:
-    image: <your-dockerhub-username>/mas-app:latest
+    image: anjanarodrigo/sentiment-intelligence:latest
     ports:
       - "3001:3001"
     environment:

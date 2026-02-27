@@ -4,7 +4,7 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.3',
     info: {
-      title: 'MAS API',
+      title: 'Sentiment Intelligence API',
       version: '1.0.0',
       description: 'Market Analysis & Sentiment Intelligence API — scrape product reviews, analyze sentiment, and manage product data.',
     },

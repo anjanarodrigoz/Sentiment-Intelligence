@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "=== MAS Application Starting ==="
+echo "=== Sentiment Intelligence Starting ==="
 
 # Extract host and port from MONGODB_URI for TCP check
 MONGO_HOST=$(echo "$MONGODB_URI" | sed -E 's|mongodb://([^:/]+).*|\1|')
@@ -29,5 +29,5 @@ node dist/scripts/migrate.js
 echo "Migration complete."
 
 # Start the server
-echo "Starting MAS server on port ${PORT:-3001}..."
+echo "Starting Sentiment Intelligence server on port ${PORT:-3001}..."
 exec node dist/index.js

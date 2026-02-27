@@ -51,20 +51,22 @@ app.use('/api/llm', llmRoute);
  *                 endpoints:
  *                   type: object
  */
-app.get('/', (_req, res) => {
-  res.json({
-    name: 'MAS Scraper Server',
-    status: 'running',
-    docs: '/api-docs',
-    endpoints: {
-      'POST /api/scrape': 'Scrape reviews from a product URL',
-      'GET /api/llm/status': 'Check Ollama LLM status',
-      'POST /api/llm/analyze': 'Analyze sentiment via local LLM',
-      'POST /api/llm/chat': 'Chat with analysis data via local LLM',
-      'GET /api/health': 'Health check',
-    },
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/', (_req, res) => {
+    res.json({
+      name: 'Sentiment Intelligence Server',
+      status: 'running',
+      docs: '/api-docs',
+      endpoints: {
+        'POST /api/scrape': 'Scrape reviews from a product URL',
+        'GET /api/llm/status': 'Check Ollama LLM status',
+        'POST /api/llm/analyze': 'Analyze sentiment via local LLM',
+        'POST /api/llm/chat': 'Chat with analysis data via local LLM',
+        'GET /api/health': 'Health check',
+      },
+    });
   });
-});
+}
 
 /**
  * @swagger

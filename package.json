@@ -1,13 +1,13 @@
 {
-  "name": "mas",
+  "name": "sentiment-intelligence",
   "private": true,
   "packageManager": "pnpm@10.30.1",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "dev:client": "turbo run dev --filter=mas-frontend",
-    "dev:server": "turbo run dev --filter=mas-backend"
+    "dev:client": "turbo run dev --filter=sentiment-intelligence-frontend",
+    "dev:server": "turbo run dev --filter=sentiment-intelligence-backend"
   },
   "devDependencies": {
     "turbo": "^2"

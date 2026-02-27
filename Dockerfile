@@ -35,7 +35,7 @@ COPY backend/tsconfig.json ./backend/
 COPY backend/src/ ./backend/src/
 
 # Build frontend (vite) and backend (tsc)
-RUN pnpm --filter mas-frontend build && pnpm --filter mas-backend build
+RUN pnpm --filter sentiment-intelligence-frontend build && pnpm --filter sentiment-intelligence-backend build
 
 # ============================================
 # Stage 3: Production runtime

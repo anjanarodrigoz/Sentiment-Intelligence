@@ -1,4 +1,4 @@
-# MAS - Market Analysis & Sentiment Intelligence
+# Sentiment Intelligence
 
 A full-stack application for scraping product reviews from major e-commerce platforms and analyzing sentiment using local LLMs.
 
@@ -60,7 +60,7 @@ ollama pull llama3.2
 
 ```bash
 git clone <repo-url>
-cd mas
+cd sentiment-intelligence
 pnpm install
 ```
 
@@ -77,7 +77,7 @@ Edit `backend/.env` if you need to change MongoDB URI or other settings. Default
 Seeds brand data (Nike, Adidas, Amazon, etc.) into MongoDB:
 
 ```bash
-pnpm --filter mas-backend migrate
+pnpm --filter sentiment-intelligence-backend migrate
 ```
 
 ### 4. Start development
@@ -106,7 +106,7 @@ This starts both frontend and backend concurrently:
 | `pnpm build`           | Production build (frontend + backend) |
 | `pnpm lint`            | Lint all workspaces                   |
 
-### Frontend (`pnpm --filter mas-frontend <script>`)
+### Frontend (`pnpm --filter sentiment-intelligence-frontend <script>`)
 
 | Script    | Description              |
 | --------- | ------------------------ |
@@ -114,7 +114,7 @@ This starts both frontend and backend concurrently:
 | `build`   | Build for production     |
 | `lint`    | Run ESLint               |
 
-### Backend (`pnpm --filter mas-backend <script>`)
+### Backend (`pnpm --filter sentiment-intelligence-backend <script>`)
 
 | Script             | Description                      |
 | ------------------ | -------------------------------- |
@@ -127,7 +127,7 @@ This starts both frontend and backend concurrently:
 ## Project Structure
 
 ```
-mas/
+sentiment-intelligence/
 ├── frontend/               # React application
 │   ├── src/
 │   │   ├── components/     # UI components
