@@ -22,12 +22,6 @@ until node -e "
 done
 echo "MongoDB is ready."
 
-# Run migration (seeds brand data)
-echo "Running database migration..."
-cd /app/backend
-node dist/scripts/migrate.js
-echo "Migration complete."
-
 # Start the server
 echo "Starting Sentiment Intelligence server on port ${PORT:-3001}..."
 exec node dist/index.js
