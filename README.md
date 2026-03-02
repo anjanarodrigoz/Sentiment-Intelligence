@@ -80,6 +80,15 @@ Seeds brand data (Nike, Adidas, Amazon, etc.) into MongoDB:
 pnpm --filter sentiment-intelligence-backend migrate
 ```
 
+The migration script simply upserts a fixed list of supported brands; it
+reads from the same `BRAND_DATA` constant used elsewhere in the codebase.  In
+production the Docker container invokes this command automatically when the
+server starts (see `docker-entrypoint.sh`), so there's no need to run it
+manually after deploying.  If you prefer to bootstrap the database from the
+JSON snapshot instead, the file `sentiment_intelligence.brands.json` is packaged
+in the image and can be loaded with `mongoimport` against the running
+`mongo` service.
+
 ### 4. Start development
 
 ```bash

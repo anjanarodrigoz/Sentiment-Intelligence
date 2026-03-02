@@ -22,6 +22,18 @@ until node -e "
 done
 echo "MongoDB is ready."
 
-# Start the server
+# Seed any initial data before launching the HTTP server.  The backend
+# includes a migration script that upserts a fixed list of brands; this is
+# called here so a fresh database will be populated automatically when the
+# container comes up.  If you prefer to import a custom JSON dump you can
+# add a `mongoimport` command instead (see README), but the Node script works
+# with the production image without installing additional packages.
+
+echo "Migrating brand data..."
+# run the compiled script produced by `tsc`; if the build step changed the
+# output directory structure then you may need to adjust this path accordingly.
+node backend/dist/scripts/migrate.js || \
+  echo "warning: brand migration script failed, continuing anyway"
+
 echo "Starting Sentiment Intelligence server on port ${PORT:-3001}..."
-exec node dist/index.js
+exec node backend/dist/index.js

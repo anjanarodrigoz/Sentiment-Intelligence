@@ -96,6 +96,11 @@ COPY backend/public ./backend/public
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
+# Optionally include brand snapshot for manual imports; the container itself uses
+# the compiled migration script instead, but having the JSON onboard makes it
+# easy to run `mongoimport` from another container or during debugging.
+COPY sentiment_intelligence.brands.json ./
+
 # Default environment variables
 ENV NODE_ENV=production
 ENV PORT=3001
