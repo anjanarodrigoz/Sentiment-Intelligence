@@ -1,0 +1,272 @@
+[{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9d5"
+  },
+  "id": "nike",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/nike.png",
+  "name": "Nike",
+  "scraperType": "nike",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9d6"
+  },
+  "id": "under-armour",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/under-armour.png",
+  "name": "Under Armour",
+  "scraperType": "bazaarvoice",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9d7"
+  },
+  "id": "nordstrom",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/nordstrom.png",
+  "name": "Nordstrom",
+  "scraperType": "bazaarvoice",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9d8"
+  },
+  "id": "the-north-face",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/the-north-face.png",
+  "name": "The North Face",
+  "scraperType": "bazaarvoice",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9d9"
+  },
+  "id": "columbia",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/columbia.png",
+  "name": "Columbia",
+  "scraperType": "bazaarvoice",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9da"
+  },
+  "id": "new-balance",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/new-balance.png",
+  "name": "New Balance",
+  "scraperType": "bazaarvoice",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9db"
+  },
+  "id": "lululemon",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/lululemon.png",
+  "name": "Lululemon",
+  "scraperType": "yotpo",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9dc"
+  },
+  "id": "allbirds",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/allbirds.png",
+  "name": "Allbirds",
+  "scraperType": "yotpo",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9dd"
+  },
+  "id": "gymshark",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/gymshark.png",
+  "name": "Gymshark",
+  "scraperType": "yotpo",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9de"
+  },
+  "id": "adidas",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/adidas.png",
+  "name": "Adidas",
+  "scraperType": "powerreviews",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9df"
+  },
+  "id": "jcpenney",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/jcpenney.png",
+  "name": "JCPenney",
+  "scraperType": "powerreviews",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9e0"
+  },
+  "id": "victorias-secret",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/victorias-secret.png",
+  "name": "Victoria's Secret",
+  "scraperType": "victoriassecret",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6989e7e36b1e47909028e9e1"
+  },
+  "id": "other",
+  "createdAt": {
+    "$date": "2026-02-09T13:57:55.255Z"
+  },
+  "isActive": true,
+  "logoUrl": "",
+  "name": "Other",
+  "scraperType": "generic",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6995727afef9ffd3daa036b4"
+  },
+  "id": "amazon",
+  "createdAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/amazon.png",
+  "name": "Amazon",
+  "scraperType": "amazon",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6995727afef9ffd3daa036b5"
+  },
+  "id": "aliexpress",
+  "createdAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/aliexpress.png",
+  "name": "AliExpress",
+  "scraperType": "aliexpress",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6995727afef9ffd3daa036b6"
+  },
+  "id": "alibaba",
+  "createdAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/alibaba.png",
+  "name": "Alibaba",
+  "scraperType": "alibaba",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6995727afef9ffd3daa036b7"
+  },
+  "id": "ebay",
+  "createdAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  },
+  "isActive": true,
+  "logoUrl": "/brands/ebay.png",
+  "name": "eBay",
+  "scraperType": "ebay",
+  "updatedAt": {
+    "$date": "2026-02-18T08:04:10.223Z"
+  }
+}]

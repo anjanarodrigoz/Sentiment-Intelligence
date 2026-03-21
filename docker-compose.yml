@@ -1,0 +1,55 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DB_NAME=sentiment_intelligence
+      - OLLAMA_API_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2
+    depends_on:
+      - mongo
+      - ollama
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  # Pulls the LLM model on first start, then exits
+  ollama-pull:
+    image: curlimages/curl:latest
+    depends_on:
+      - ollama
+    restart: "no"
+    entrypoint:
+      - sh
+      - -c
+      - |
+        echo "Waiting for Ollama to be ready..."
+        until curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
+          sleep 2
+        done
+        echo "Pulling llama3.2 model..."
+        curl -s http://ollama:11434/api/pull -d '{"name": "llama3.2"}'
+        echo ""
+        echo "Model pull complete."
+
+volumes:
+  mongo_data:
+  ollama_data:
