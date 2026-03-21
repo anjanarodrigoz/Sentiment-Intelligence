@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/routes/scrape.ts","./src/scrapers/basescraper.ts","./src/scrapers/bazaarvoice.ts","./src/scrapers/generic.ts","./src/scrapers/powerreviews.ts","./src/scrapers/registry.ts","./src/scrapers/types.ts","./src/scrapers/yotpo.ts","./src/utils/browser.ts","./src/utils/ratelimit.ts","./src/utils/useragent.ts"],"version":"5.9.3"}
