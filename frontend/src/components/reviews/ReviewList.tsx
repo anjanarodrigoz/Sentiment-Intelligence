@@ -4,6 +4,9 @@ import Card from '../ui/Card';
 import { useFilteredReviews } from '../../hooks/useFilteredReviews';
 import type { AnalyzedReview } from '../../types/review';
 import { cn } from '../../lib/utils';
+import { Download } from 'lucide-react';
+import Button from '../ui/Button';
+import { exportReviewsToCsv } from '../../lib/exportCsv';
 
 interface ReviewListProps {
   reviews: AnalyzedReview[];
@@ -28,6 +31,17 @@ export default function ReviewList({
         <h4 className={cn('font-semibold', compact ? 'text-sm' : 'text-base')}>
           {title || `Reviews (${filtered.length})`}
         </h4>
+        {filtered.length > 0 && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => exportReviewsToCsv(filtered, 'analyzed-reviews.csv')}
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download CSV
+          </Button>
+        )}
       </div>
 
       {showFilters && <ReviewFilters />}

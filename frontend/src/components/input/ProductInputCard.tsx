@@ -5,6 +5,9 @@ import ReviewSourceToggle from './ReviewSourceToggle';
 import UrlReviewInput from './UrlReviewInput';
 import ExistingProductSelector from './ExistingProductSelector';
 import type { ProductInput } from '../../types/product';
+import { Download } from 'lucide-react';
+import Button from '../ui/Button';
+import { exportReviewsToCsv } from '../../lib/exportCsv';
 
 interface ProductInputCardProps {
   product: ProductInput;
@@ -44,6 +47,20 @@ export default function ProductInputCard({
 
             {product.scrapedReviews && (
               <div className="space-y-4 border-t border-border pt-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-text-primary">
+                    Fetched Details ({product.scrapedReviews.length} reviews)
+                  </h4>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => exportReviewsToCsv(product.scrapedReviews!, `reviews-${product.id}.csv`)}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download CSV
+                  </Button>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-1.5">
                     Product Title
@@ -127,6 +144,20 @@ export default function ProductInputCard({
 
             {product.scrapedReviews && product.scrapedReviews.length > 0 && (
               <div className="space-y-4 border-t border-border pt-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-text-primary">
+                    Fetched Details ({product.scrapedReviews.length} reviews)
+                  </h4>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => exportReviewsToCsv(product.scrapedReviews!, `reviews-${product.id}.csv`)}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download CSV
+                  </Button>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-1.5">
                     Product Title
