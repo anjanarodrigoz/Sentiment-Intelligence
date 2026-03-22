@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ProductInput } from '../../types/product';
 import { Download, Star, RefreshCw, Loader2, ExternalLink } from 'lucide-react';
 import { exportReviewsToCsv } from '../../lib/exportCsv';
 import VersionSelector from './VersionSelector';
 import Button from '../ui/Button';
+import ConfirmDialog from '../ui/ConfirmDialog';
 import { useScrapeStream } from '../../hooks/useScrapeStream';
 import { useAppStore } from '../../store/useAppStore';
 import { cn } from '../../lib/utils';
@@ -22,6 +23,7 @@ export default function ProductInputCard({
   onUpdate,
 }: ProductInputCardProps) {
   const { selectedBrand } = useAppStore();
+  const [showRescrapeConfirm, setShowRescrapeConfirm] = useState(false);
   const {
     isStreaming,
     progress,
@@ -57,16 +59,32 @@ export default function ProductInputCard({
 
   const handleRescrape = () => {
     if (product.productUrl && selectedBrand) {
-      if (window.confirm("Are you sure you want to re-scrape this product? This will fetch the latest reviews.")) {
-        completedRef.current = false;
-        startStream(product.productUrl, selectedBrand, true);
-      }
+      setShowRescrapeConfirm(true);
+    }
+  };
+
+  const handleRescrapeConfirmed = () => {
+    setShowRescrapeConfirm(false);
+    if (product.productUrl && selectedBrand) {
+      completedRef.current = false;
+      startStream(product.productUrl, selectedBrand, true);
     }
   };
 
   const hasData = Boolean(product.title || product.scrapedReviews);
 
   return (
+    <>
+      <ConfirmDialog
+        open={showRescrapeConfirm}
+        title="Re-scrape Product?"
+        description="This will fetch the latest reviews from the source. Any unsaved changes will be replaced with the new data."
+        confirmLabel="Re-scrape"
+        cancelLabel="Cancel"
+        variant="default"
+        onConfirm={handleRescrapeConfirmed}
+        onCancel={() => setShowRescrapeConfirm(false)}
+      />
     <div className={cn("h-full flex flex-col bg-white border border-border hover:border-primary/30 transition-colors rounded-[1.25rem] p-5 relative overflow-hidden shadow-sm", isStreaming && "opacity-80 pointer-events-none")}>
       {/* Streaming Progress Overlay */}
       {isStreaming && (
@@ -232,5 +250,6 @@ export default function ProductInputCard({
         )}
       </div>
     </div>
+    </>
   );
 }
