@@ -15,11 +15,7 @@ export default function ProductInputPage() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const allValid = products.every((p) =>
-    p.title && (
-      (p.inputMode === 'file' && p.reviewFile) ||
-      (p.inputMode === 'url' && p.scrapedReviews && p.scrapedReviews.length > 0) ||
-      (p.inputMode === 'existing' && p.scrapedReviews && p.scrapedReviews.length > 0)
-    )
+    p.title && p.scrapedReviews && p.scrapedReviews.length > 0
   );
 
   const handleAnalyze = async () => {

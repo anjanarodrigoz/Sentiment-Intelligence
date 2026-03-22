@@ -1,6 +1,4 @@
 import Card from '../ui/Card';
-import ProductImageUpload from './ProductImageUpload';
-import ReviewFileUpload from './ReviewFileUpload';
 import ReviewSourceToggle from './ReviewSourceToggle';
 import UrlReviewInput from './UrlReviewInput';
 import ExistingProductSelector from './ExistingProductSelector';
@@ -220,75 +218,7 @@ export default function ProductInputCard({
               </div>
             )}
           </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1.5">
-                Product Title
-              </label>
-              <input
-                type="text"
-                value={product.title}
-                onChange={(e) => onUpdate({ title: e.target.value })}
-                placeholder="e.g., Lululemon Align High-Rise Pant 28"
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5">
-                  Overall Rating
-                </label>
-                <input
-                  type="number"
-                  value={product.overallRating || ''}
-                  onChange={(e) =>
-                    onUpdate({ overallRating: parseFloat(e.target.value) || 0 })
-                  }
-                  placeholder="4.5"
-                  min={0}
-                  max={5}
-                  step={0.1}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5">
-                  Total Review Count
-                </label>
-                <input
-                  type="number"
-                  value={product.overallReviewCount || ''}
-                  onChange={(e) =>
-                    onUpdate({
-                      overallReviewCount: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="1250"
-                  min={0}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
-              </div>
-            </div>
-
-            <ProductImageUpload
-              imageUrl={product.imageUrl}
-              imageFile={product.imageFile}
-              onImageFileChange={(file) => onUpdate({ imageFile: file })}
-              onImageUrlChange={(url) => onUpdate({ imageUrl: url })}
-            />
-
-            <ReviewFileUpload
-              reviewFile={product.reviewFile}
-              reviewFileName={product.reviewFileName}
-              reviewCount={product.reviewCount}
-              onFileChange={(file, name, count) =>
-                onUpdate({ reviewFile: file, reviewFileName: name, reviewCount: count })
-              }
-            />
-          </>
-        )}
+        ) : null}
       </div>
     </Card>
   );

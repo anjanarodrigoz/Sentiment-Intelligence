@@ -42,7 +42,7 @@ function createEmptyProduct(index: number): ProductInput {
     reviewFile: null,
     reviewFileName: '',
     reviewCount: 0,
-    inputMode: 'file',
+    inputMode: 'url',
     brand: '',
     productUrl: '',
     scrapedReviews: null,
