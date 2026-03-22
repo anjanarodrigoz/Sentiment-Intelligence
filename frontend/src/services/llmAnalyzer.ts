@@ -14,7 +14,9 @@ export async function checkLlmStatus(): Promise<{ running: boolean; models: stri
 
 export async function analyzeReviewsWithLLM(
   reviews: RawReview[],
-  model: string
+  model: string,
+  provider?: string,
+  apiKey?: string
 ): Promise<AnalyzedReview[]> {
   const response = await fetch('/api/llm/analyze', {
     method: 'POST',
@@ -22,6 +24,8 @@ export async function analyzeReviewsWithLLM(
     body: JSON.stringify({
       reviews: reviews.map((r) => ({ text: r.text, rating: r.rating })),
       model,
+      provider,
+      apiKey
     }),
   });
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Loader2, Key, Sparkles, Brain, ChevronDown } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, Brain, ChevronDown } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { sendChatMessage, type ChatMessage as ChatMsg } from '../../services/aiChat';
+import type { ChatMessage as ChatMsg } from '../../services/llmChat';
 import { sendLlmChatMessage } from '../../services/llmChat';
 import { checkLlmStatus } from '../../services/llmAnalyzer';
 import ChatMessage from './ChatMessage';
@@ -20,9 +20,6 @@ const QUICK_QUESTIONS = [
 ];
 
 export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
-  const [chatProvider, setChatProvider] = useState<'claude' | 'llm'>('claude');
-  const [apiKey, setApiKey] = useState('');
-  const [showKeyInput, setShowKeyInput] = useState(true);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,7 +29,8 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState('llama3.2');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { analyses, aggregateAnalysis } = useAppStore();
+  
+  const { analyses, aggregateAnalysis, analysisMethod, cloudProvider, cloudApiKey } = useAppStore();
 
   const activeAnalyses = aggregateAnalysis ? [aggregateAnalysis] : analyses;
 
@@ -51,7 +49,8 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingContent]);
 
-  const isReady = chatProvider === 'llm' ? ollamaRunning : !!apiKey;
+  const isCloud = analysisMethod === 'cloud';
+  const isReady = isCloud ? !!cloudApiKey : ollamaRunning;
 
   const handleSend = async (text?: string) => {
     const msg = text || input.trim();
@@ -65,23 +64,20 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
     setStreamingContent('');
 
     try {
-      if (chatProvider === 'llm') {
-        let accumulated = '';
-        const fullResponse = await sendLlmChatMessage(
-          newMessages,
-          activeAnalyses,
-          selectedModel,
-          (token) => {
-            accumulated += token;
-            setStreamingContent(accumulated);
-          }
-        );
-        setStreamingContent('');
-        setMessages([...newMessages, { role: 'assistant', content: fullResponse }]);
-      } else {
-        const response = await sendChatMessage(newMessages, activeAnalyses, apiKey);
-        setMessages([...newMessages, { role: 'assistant', content: response }]);
-      }
+      let accumulated = '';
+      const fullResponse = await sendLlmChatMessage(
+        newMessages,
+        activeAnalyses,
+        isCloud ? cloudProvider : selectedModel,
+        (token) => {
+          accumulated += token;
+          setStreamingContent(accumulated);
+        },
+        isCloud ? cloudProvider : undefined,
+        isCloud ? cloudApiKey : undefined
+      );
+      setStreamingContent('');
+      setMessages([...newMessages, { role: 'assistant', content: fullResponse }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get response');
     } finally {
@@ -105,38 +101,25 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
         </button>
       </div>
 
-      {/* Provider toggle */}
-      <div className="px-4 py-2 border-b border-border bg-gray-50">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setChatProvider('claude')}
-            className={`flex-1 text-xs py-1.5 px-3 rounded-md font-medium transition-colors ${
-              chatProvider === 'claude'
-                ? 'bg-primary text-white'
-                : 'bg-white text-text-secondary border border-border hover:bg-gray-100'
-            }`}
-          >
-            Claude API
-          </button>
-          <button
-            onClick={() => ollamaRunning && setChatProvider('llm')}
-            disabled={!ollamaRunning}
-            className={`flex-1 text-xs py-1.5 px-3 rounded-md font-medium transition-colors flex items-center justify-center gap-1.5 ${
-              chatProvider === 'llm'
-                ? 'bg-primary text-white'
-                : !ollamaRunning
-                  ? 'bg-gray-100 text-text-secondary/50 cursor-not-allowed'
-                  : 'bg-white text-text-secondary border border-border hover:bg-gray-100'
-            }`}
-          >
-            <Brain className="w-3.5 h-3.5" />
-            Local LLM
-          </button>
+      {/* Provider & Model Info */}
+      <div className="px-4 py-3 border-b border-border bg-gray-50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isCloud ? (
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium border border-blue-100">
+              <Sparkles className="w-3.5 h-3.5" />
+              {cloudProvider === 'openai' ? 'OpenAI GPT-4o' : cloudProvider === 'gemini' ? 'Google Gemini' : 'Anthropic Claude'}
+            </div>
+          ) : (
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${ollamaRunning ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+              <Brain className="w-3.5 h-3.5" />
+              {ollamaRunning ? 'Local LLM' : 'Ollama Not Running'}
+            </div>
+          )}
         </div>
 
-        {/* LLM model selector */}
-        {chatProvider === 'llm' && ollamaModels.length > 0 && (
-          <div className="mt-2 flex items-center gap-2">
+        {/* LLM model selector (Only for Local) */}
+        {!isCloud && ollamaModels.length > 0 && (
+          <div className="flex items-center gap-2">
             <span className="text-xs text-text-secondary">Model:</span>
             <div className="relative">
               <select
@@ -153,35 +136,6 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
           </div>
         )}
       </div>
-
-      {/* API Key setup (Claude only) */}
-      {chatProvider === 'claude' && showKeyInput && (
-        <div className="p-4 bg-blue-50 border-b border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Key className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">Anthropic API Key</span>
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-ant-..."
-              className="flex-1 px-3 py-1.5 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <Button
-              size="sm"
-              disabled={!apiKey}
-              onClick={() => setShowKeyInput(false)}
-            >
-              Save
-            </Button>
-          </div>
-          <p className="text-xs text-text-secondary mt-1">
-            Key is stored in memory only — never saved to disk.
-          </p>
-        </div>
-      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -208,7 +162,7 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
         {messages.map((msg, i) => (
           <ChatMessage
             key={i}
-            role={msg.role}
+            role={msg.role as 'user' | 'assistant'}
             content={msg.content}
             analyses={msg.role === 'assistant' ? activeAnalyses : undefined}
           />
@@ -241,8 +195,8 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
             placeholder={
               isReady
                 ? 'Ask about the analysis...'
-                : chatProvider === 'claude'
-                  ? 'Enter API key first'
+                : isCloud
+                  ? 'Configure API Key in settings'
                   : 'Ollama not running'
             }
             disabled={!isReady || loading}
@@ -256,14 +210,6 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        {chatProvider === 'claude' && !apiKey && (
-          <button
-            onClick={() => setShowKeyInput(true)}
-            className="text-xs text-primary mt-1 hover:underline"
-          >
-            Configure API key
-          </button>
-        )}
       </div>
     </div>
   );

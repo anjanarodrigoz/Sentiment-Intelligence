@@ -1,12 +1,18 @@
 import type { ProductAnalysis } from '../types/product';
-import type { ChatMessage } from './aiChat';
 import { buildContextSummary, buildSystemPrompt } from './chatContext';
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 export async function sendLlmChatMessage(
   messages: ChatMessage[],
   analyses: ProductAnalysis[],
   model: string,
-  onToken: (token: string) => void
+  onToken: (token: string) => void,
+  provider?: string,
+  apiKey?: string
 ): Promise<string> {
   const context = buildContextSummary(analyses);
   const systemPrompt = buildSystemPrompt(context);
@@ -21,6 +27,8 @@ export async function sendLlmChatMessage(
       })),
       systemPrompt,
       model,
+      provider,
+      apiKey
     }),
   });
 
