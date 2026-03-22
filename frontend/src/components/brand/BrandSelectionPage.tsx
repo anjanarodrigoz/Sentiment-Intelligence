@@ -31,17 +31,17 @@ export default function BrandSelectionPage() {
 
   const handleContinue = () => {
     if (!selectedBrand) return;
-    navigate('/mode');
+    navigate('/input');
   };
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-10">
+      <div className="text-center mb-10 pt-8">
         <h1 className="text-3xl font-bold text-text-primary mb-3">
-          Consumer Sentiment Intelligence
+          Select Your Industry Brand
         </h1>
         <p className="text-text-secondary text-lg">
-          Select a brand to analyze
+          Choose a brand to calibrate the sentiment models
         </p>
       </div>
 

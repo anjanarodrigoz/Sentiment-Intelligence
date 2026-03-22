@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { checkStatus, analyzeSentimentBatch, chatStream } from '../services/ollamaService.js';
+import { analyzeSentimentBatchCloud, chatStreamCloud } from '../services/cloudLlmService.js';
 import type { ChatMessage } from '../services/ollamaService.js';
 
 export const llmRoute = Router();
@@ -114,7 +115,7 @@ llmRoute.get('/status', async (_req, res) => {
  *               $ref: '#/components/schemas/Error'
  */
 llmRoute.post('/analyze', async (req, res) => {
-  const { reviews, model } = req.body;
+  const { reviews, model, provider, apiKey } = req.body;
 
   if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
     res.status(400).json({ error: 'reviews array is required' });
@@ -124,12 +125,19 @@ llmRoute.post('/analyze', async (req, res) => {
   const start = Date.now();
 
   try {
-    const results = await analyzeSentimentBatch(reviews, model);
+    let results;
+    if (provider && provider !== 'ollama') {
+      if (!apiKey) throw new Error('API key is required for cloud providers');
+      results = await analyzeSentimentBatchCloud(reviews, provider, apiKey);
+    } else {
+      results = await analyzeSentimentBatch(reviews, model);
+    }
+    
     const duration = Date.now() - start;
 
     res.json({
       results,
-      model: model || process.env.OLLAMA_MODEL || 'llama3.2',
+      model: provider && provider !== 'ollama' ? provider : (model || process.env.OLLAMA_MODEL || 'llama3.2'),
       duration,
       count: results.length,
     });
@@ -170,11 +178,13 @@ llmRoute.post('/analyze', async (req, res) => {
  *               $ref: '#/components/schemas/Error'
  */
 llmRoute.post('/chat', async (req, res) => {
-  const { messages, context, systemPrompt, model } = req.body as {
+  const { messages, context, systemPrompt, model, provider, apiKey } = req.body as {
     messages: ChatMessage[];
     context?: string;
     systemPrompt?: string;
     model?: string;
+    provider?: string;
+    apiKey?: string;
   };
 
   if (!messages || !Array.isArray(messages)) {
@@ -187,7 +197,13 @@ llmRoute.post('/chat', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const stream = chatStream(messages, systemPrompt || context || '', model);
+    let stream;
+    if (provider && provider !== 'ollama') {
+      if (!apiKey) throw new Error('API key is required for cloud providers');
+      stream = chatStreamCloud(messages, systemPrompt || context || '', provider, apiKey);
+    } else {
+      stream = chatStream(messages, systemPrompt || context || '', model);
+    }
 
     for await (const token of stream) {
       res.write(`data: ${JSON.stringify({ token })}\n\n`);

@@ -1,7 +1,7 @@
-import { FileSpreadsheet, Globe, Database } from 'lucide-react';
+import { Globe, Database } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-type InputMode = 'file' | 'url' | 'existing';
+type InputMode = 'url' | 'existing';
 
 interface ReviewSourceToggleProps {
   mode: InputMode;
@@ -9,7 +9,6 @@ interface ReviewSourceToggleProps {
 }
 
 const modes: { value: InputMode; label: string; icon: typeof Globe }[] = [
-  { value: 'file', label: 'Upload File', icon: FileSpreadsheet },
   { value: 'url', label: 'Product URL', icon: Globe },
   { value: 'existing', label: 'Previously Scraped', icon: Database },
 ];

@@ -16,7 +16,7 @@ export interface ProductInput {
   reviewFile: File | null;
   reviewFileName: string;
   reviewCount: number;
-  inputMode: 'file' | 'url' | 'existing';
+  inputMode: 'url' | 'existing';
   brand: string;
   productUrl: string;
   scrapedReviews: RawReview[] | null;

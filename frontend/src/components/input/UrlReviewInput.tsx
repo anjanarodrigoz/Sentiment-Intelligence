@@ -182,34 +182,35 @@ export default function UrlReviewInput({
   };
 
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-medium text-text-primary">
+    <div className="space-y-4 pt-2">
+      <label className="block text-sm font-semibold text-text-primary mb-1">
         Product URL
       </label>
 
       <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+        <div className="relative flex-1 group">
+          <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
           <input
             type="url"
             value={productUrl}
             onChange={(e) => onUrlChange(e.target.value)}
-            placeholder="Paste the product URL..."
-            className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            placeholder="Paste Amazon, Sephora, or Shopify product link..."
+            className="w-full pl-11 pr-4 py-3.5 text-base bg-white border-2 border-border/60 hover:border-border rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm"
           />
         </div>
         <Button
           onClick={() => handleFetch()}
           disabled={!isValidUrl || isBusy}
-          size="sm"
+          size="lg"
+          className="rounded-xl px-6 font-medium shadow-sm"
         >
           {isBusy ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {dedupMessage ? 'Comparing...' : 'Fetching...'}
-            </>
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>{dedupMessage ? 'Comparing' : 'Fetching'}</span>
+            </div>
           ) : (
-            'Fetch Reviews'
+            'Scrape Details'
           )}
         </Button>
       </div>

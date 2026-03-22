@@ -54,11 +54,21 @@ export function useAnalysis() {
         }
         setProcessing(true, Math.round(((i + 0.5) / products.length) * 100));
 
-        // 2. Analyze reviews (VADER or LLM based on user selection)
-        const { analysisMethod, llmModel } = useAppStore.getState();
-        const analyzedReviews = analysisMethod === 'llm'
-          ? await analyzeReviewsWithLLM(rawReviews, llmModel)
-          : analyzeAllReviews(rawReviews);
+        // 2. Analyze reviews (VADER, Local LLM, or Cloud LLM based on user selection)
+        const { analysisMethod, llmModel, cloudProvider, cloudApiKey } = useAppStore.getState();
+        
+        let analyzedReviews;
+        if (analysisMethod === 'vader') {
+          analyzedReviews = analyzeAllReviews(rawReviews);
+        } else {
+          analyzedReviews = await analyzeReviewsWithLLM(
+            rawReviews,
+            llmModel,
+            analysisMethod === 'cloud' ? cloudProvider : 'ollama',
+            analysisMethod === 'cloud' ? cloudApiKey : undefined
+          );
+        }
+        
         setProcessing(true, Math.round(((i + 0.8) / products.length) * 100));
 
         // 3. Compute summaries

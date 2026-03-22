@@ -11,8 +11,10 @@ interface AppState {
   aggregateAnalysis: ProductAnalysis | null;
   isProcessing: boolean;
   processingProgress: number;
-  analysisMethod: 'vader' | 'llm';
+  analysisMethod: 'vader' | 'llm' | 'cloud';
   llmModel: string;
+  cloudProvider: 'openai' | 'gemini' | 'anthropic';
+  cloudApiKey: string;
 
   setBrand: (brand: string) => void;
   setMode: (mode: AnalysisMode) => void;
@@ -22,8 +24,10 @@ interface AppState {
   setAnalyses: (analyses: ProductAnalysis[]) => void;
   setAggregateAnalysis: (analysis: ProductAnalysis | null) => void;
   setProcessing: (isProcessing: boolean, progress?: number) => void;
-  setAnalysisMethod: (method: 'vader' | 'llm') => void;
+  setAnalysisMethod: (method: 'vader' | 'llm' | 'cloud') => void;
   setLlmModel: (model: string) => void;
+  setCloudProvider: (provider: 'openai' | 'gemini' | 'anthropic') => void;
+  setCloudApiKey: (key: string) => void;
   reset: () => void;
 }
 
@@ -38,7 +42,7 @@ function createEmptyProduct(index: number): ProductInput {
     reviewFile: null,
     reviewFileName: '',
     reviewCount: 0,
-    inputMode: 'file',
+    inputMode: 'url',
     brand: '',
     productUrl: '',
     scrapedReviews: null,
@@ -54,8 +58,10 @@ export const useAppStore = create<AppState>((set) => ({
   aggregateAnalysis: null,
   isProcessing: false,
   processingProgress: 0,
-  analysisMethod: 'vader',
-  llmModel: 'llama3.2',
+  analysisMethod: localStorage.getItem('sentiment_analysisMethod') as 'vader' | 'llm' | 'cloud' || 'vader',
+  llmModel: localStorage.getItem('sentiment_llmModel') || 'llama3.2',
+  cloudProvider: localStorage.getItem('sentiment_cloudProvider') as 'openai' | 'gemini' | 'anthropic' || 'openai',
+  cloudApiKey: localStorage.getItem('sentiment_cloudApiKey') || '',
 
   setBrand: (brand) => set({ selectedBrand: brand }),
 
@@ -86,9 +92,25 @@ export const useAppStore = create<AppState>((set) => ({
   setProcessing: (isProcessing, progress = 0) =>
     set({ isProcessing, processingProgress: progress }),
 
-  setAnalysisMethod: (method) => set({ analysisMethod: method }),
+  setAnalysisMethod: (method) => {
+    localStorage.setItem('sentiment_analysisMethod', method);
+    set({ analysisMethod: method });
+  },
 
-  setLlmModel: (model) => set({ llmModel: model }),
+  setLlmModel: (model) => {
+    localStorage.setItem('sentiment_llmModel', model);
+    set({ llmModel: model });
+  },
+
+  setCloudProvider: (provider) => {
+    localStorage.setItem('sentiment_cloudProvider', provider);
+    set({ cloudProvider: provider });
+  },
+
+  setCloudApiKey: (key) => {
+    localStorage.setItem('sentiment_cloudApiKey', key);
+    set({ cloudApiKey: key });
+  },
 
   reset: () =>
     set({

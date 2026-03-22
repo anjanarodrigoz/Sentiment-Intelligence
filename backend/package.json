@@ -11,10 +11,13 @@
     "migrate:reviews": "tsx src/scripts/migrateReviews.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "@google/genai": "^1.46.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.4",
     "express": "^5.1.0",
     "mongodb": "^7.1.0",
+    "openai": "^6.32.0",
     "puppeteer": "^24.9.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
