@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Clock, Loader2, ChevronRight } from 'lucide-react';
+import { Clock, Loader2 } from 'lucide-react';
 import { useVersionSelector } from '../../hooks/useVersionSelector';
 import type { RawReview } from '../../types/review';
 import type { ScrapedProduct } from '../../types/scrape';
@@ -55,62 +55,45 @@ export default function VersionSelector({
   };
 
   return (
-    <div className="bg-gray-50 border border-border rounded-lg p-3 space-y-2">
-      <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
-        <Clock className="w-4 h-4" />
-        Version History
-        {isLoading && <Loader2 className="w-3 h-3 animate-spin text-text-secondary" />}
-      </div>
+    <div className="bg-gray-50/80 border border-border rounded-lg p-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <label className="text-sm font-medium text-text-primary flex items-center gap-2 whitespace-nowrap">
+          <Clock className="w-4 h-4 text-text-secondary" />
+          Version History:
+          {isLoading && <Loader2 className="w-3 h-3 animate-spin text-text-secondary" />}
+        </label>
 
-      {error && (
-        <div className="text-xs text-sentiment-negative">{error}</div>
-      )}
-
-      <div className="space-y-1">
-        {versions.map((v) => {
-          const isSelected = (selectedVersion ?? currentVersion) === v.version;
-          const isBaseline = v.version === 1;
-
-          return (
-            <button
-              key={v.version}
-              onClick={() => handleVersionClick(v.version)}
+        {error ? (
+          <div className="text-xs text-sentiment-negative">{error}</div>
+        ) : (
+          <div className="relative flex-1 w-full">
+            <select
+              value={selectedVersion ?? currentVersion}
+              onChange={(e) => handleVersionClick(Number(e.target.value))}
               disabled={isLoading}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-left text-sm transition-colors ${
-                isSelected
-                  ? 'bg-primary/10 border border-primary/30 text-primary'
-                  : 'hover:bg-gray-100 text-text-secondary'
-              }`}
+              className="w-full appearance-none bg-white border border-border hover:border-border/80 rounded-md pl-3 pr-8 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer shadow-sm transition-all"
             >
-              <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${
-                isSelected ? 'bg-primary/20 text-primary' : 'bg-gray-200 text-text-secondary'
-              }`}>
-                v{v.version}
-              </span>
+              {versions.map((v) => {
+                const isBaseline = v.version === 1;
+                const newRv = isBaseline
+                  ? `${v.newReviewCount || v.reviewCount} total`
+                  : `+${v.newReviewCount || v.reviewCount} new`;
+                const cumRv = `${v.cumulativeReviewCount || v.reviewCount} total reviews`;
 
-              <span className="flex-1">
-                <span className="text-text-primary text-xs">{formatDate(v.scrapedAt)}</span>
-                <span className="text-text-secondary text-xs ml-2">
-                  {isBaseline
-                    ? `${v.newReviewCount || v.reviewCount} reviews`
-                    : `+${v.newReviewCount || v.reviewCount} new`}
-                </span>
-              </span>
-
-              <span className="text-xs text-text-secondary">
-                {v.cumulativeReviewCount || v.reviewCount} total
-              </span>
-
-              {isSelected && (
-                <ChevronRight className="w-3 h-3 text-primary" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="text-xs text-text-secondary pt-1 border-t border-border">
-        Select a version to view cumulative reviews up to that point
+                return (
+                  <option key={v.version} value={v.version}>
+                    v{v.version} — {formatDate(v.scrapedAt)} ({newRv}) | {cumRv}
+                  </option>
+                );
+              })}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
