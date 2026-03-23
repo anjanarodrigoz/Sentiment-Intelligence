@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Zap, Brain, CircleCheck, CircleX, ChevronDown } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { checkLlmStatus } from '../../services/llmAnalyzer';
+import { getModelDisplayName } from '../../config/modelNames';
 
 export default function AnalysisMethodSelector() {
   const { 
@@ -124,10 +125,10 @@ export default function AnalysisMethodSelector() {
                   </optgroup>
                   
                   {ollamaRunning && availableModels.length > 0 ? (
-                    <optgroup label="Local Models (Ollama)">
+                    <optgroup label="Local Models">
                       {availableModels.map((m) => (
                         <option key={`local:${m}`} value={`local:${m}`}>
-                          {m} (Local)
+                          {getModelDisplayName(m)}
                         </option>
                       ))}
                     </optgroup>

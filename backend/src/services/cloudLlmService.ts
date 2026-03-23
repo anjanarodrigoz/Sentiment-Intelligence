@@ -29,18 +29,18 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 4): Promise<T> {
       return await fn();
     } catch (error: any) {
       if (i === maxRetries - 1) throw error;
-      
-      const isRateLimit = 
-        error?.status === 429 || 
-        error?.message?.toLowerCase().includes('429') || 
-        error?.message?.toLowerCase().includes('quota') || 
+
+      const isRateLimit =
+        error?.status === 429 ||
+        error?.message?.toLowerCase().includes('429') ||
+        error?.message?.toLowerCase().includes('quota') ||
         error?.message?.toLowerCase().includes('too many requests') ||
         error?.status >= 500;
 
       if (isRateLimit) {
         // Wait 10s, 20s, 40s to clear minute-based quotas
         const delay = Math.pow(2, i) * 10000 + Math.random() * 2000;
-        console.warn(`[Cloud LLM] Rate limited or server error. Retrying in ${Math.round(delay/1000)}s... (Attempt ${i + 1}/${maxRetries})`);
+        console.warn(`[Cloud LLM] Rate limited or server error. Retrying in ${Math.round(delay / 1000)}s... (Attempt ${i + 1}/${maxRetries})`);
         await new Promise(r => setTimeout(r, delay));
       } else {
         throw error;
@@ -50,20 +50,50 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 4): Promise<T> {
   throw new Error('Max retries reached');
 }
 
-async function processConcurrently<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length);
+async function* processConcurrentlyStream<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): AsyncGenerator<{ result: R; index: number }> {
   let currentIndex = 0;
-  
+  const total = items.length;
+
+  const results: { result: R; index: number }[] = [];
+  let resolveNext: ((val: { result: R; index: number } | null) => void) | null = null;
+  const queue: ({ result: R; index: number } | null)[] = [];
+
   const workers = Array.from({ length: concurrency }, async () => {
     while (currentIndex < items.length) {
       const index = currentIndex++;
-      results[index] = await fn(items[index]);
+      const result = await fn(items[index]);
+      const update = { result, index };
+      if (resolveNext) {
+        resolveNext(update);
+        resolveNext = null;
+      } else {
+        queue.push(update);
+      }
     }
   });
 
-  await Promise.all(workers);
-  return results;
+  const completion = Promise.all(workers).then(() => {
+    if (resolveNext) {
+      resolveNext(null);
+    } else {
+      queue.push(null);
+    }
+  });
+
+  while (true) {
+    if (queue.length > 0) {
+      const next = queue.shift();
+      if (next === undefined || next === null) break;
+      yield next;
+    } else {
+      const next = await new Promise<{ result: R; index: number } | null>(r => { resolveNext = r; });
+      if (next === null) break;
+      yield next;
+    }
+  }
 }
+
+
 
 function buildSentimentPrompt(reviews: ReviewInput[]): string {
   const reviewList = reviews
@@ -117,7 +147,7 @@ function extractArray(response: string): any[] {
     const direct = JSON.parse(cleaned);
     if (direct && Array.isArray(direct.reviews)) return direct.reviews;
     if (Array.isArray(direct)) return direct;
-  } catch {}
+  } catch { }
 
   const start = cleaned.indexOf('[');
   if (start !== -1) {
@@ -129,7 +159,7 @@ function extractArray(response: string): any[] {
         try {
           const candidate = cleaned.slice(start, i + 1);
           return JSON.parse(candidate);
-        } catch {}
+        } catch { }
         break;
       }
     }
@@ -147,11 +177,11 @@ function parseSentimentResponse(response: string, count: number): SentimentResul
   return results;
 }
 
-export async function analyzeSentimentBatchCloud(
+export async function* analyzeSentimentStreamCloud(
   reviews: ReviewInput[],
   provider: string,
   apiKey: string
-): Promise<SentimentResult[]> {
+): AsyncGenerator<{ results: SentimentResult[]; index: number; total: number }> {
   const batches: ReviewInput[][] = [];
   for (let i = 0; i < reviews.length; i += BATCH_SIZE) {
     batches.push(reviews.slice(i, i + BATCH_SIZE));
@@ -176,7 +206,7 @@ export async function analyzeSentimentBatchCloud(
         const resp = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: prompt,
-          config: { 
+          config: {
             temperature: 0,
             responseMimeType: 'application/json'
           },
@@ -185,7 +215,7 @@ export async function analyzeSentimentBatchCloud(
       } else if (provider === 'anthropic') {
         const anthropic = new Anthropic({ apiKey });
         const resp = await anthropic.messages.create({
-          model: 'claude-3-5-haiku-latest',
+          model: 'claude-3-5-haiku-20241022',
           max_tokens: 4000,
           temperature: 0,
           messages: [{ role: 'user', content: prompt }],
@@ -201,14 +231,30 @@ export async function analyzeSentimentBatchCloud(
     });
   };
 
-  const batchResultsArray = await processConcurrently(batches, CONCURRENCY_LIMIT, processBatch);
-  
-  const finalResults: SentimentResult[] = [];
-  for (const res of batchResultsArray) {
-    if (res) finalResults.push(...res);
-  }
+  let processedCount = 0;
+  const stream = processConcurrentlyStream(batches, CONCURRENCY_LIMIT, processBatch);
 
-  return finalResults;
+  for await (const { result, index } of stream) {
+    processedCount += batches[index].length;
+    yield {
+      results: result,
+      index: processedCount,
+      total: reviews.length
+    };
+  }
+}
+
+export async function analyzeSentimentBatchCloud(
+  reviews: ReviewInput[],
+  provider: string,
+  apiKey: string
+): Promise<SentimentResult[]> {
+  const results: SentimentResult[] = [];
+  const stream = analyzeSentimentStreamCloud(reviews, provider, apiKey);
+  for await (const { results: batchResults } of stream) {
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 export async function* chatStreamCloud(

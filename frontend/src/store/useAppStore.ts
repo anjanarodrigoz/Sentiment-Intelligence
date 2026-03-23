@@ -11,6 +11,7 @@ interface AppState {
   aggregateAnalysis: ProductAnalysis | null;
   isProcessing: boolean;
   processingProgress: number;
+  processingStatus: string;
   analysisMethod: 'vader' | 'llm' | 'cloud';
   llmModel: string;
   cloudProvider: 'openai' | 'gemini' | 'anthropic';
@@ -23,7 +24,7 @@ interface AppState {
   updateProduct: (id: string, updates: Partial<ProductInput>) => void;
   setAnalyses: (analyses: ProductAnalysis[]) => void;
   setAggregateAnalysis: (analysis: ProductAnalysis | null) => void;
-  setProcessing: (isProcessing: boolean, progress?: number) => void;
+  setProcessing: (isProcessing: boolean, progress?: number, status?: string) => void;
   setAnalysisMethod: (method: 'vader' | 'llm' | 'cloud') => void;
   setLlmModel: (model: string) => void;
   setCloudProvider: (provider: 'openai' | 'gemini' | 'anthropic') => void;
@@ -58,8 +59,9 @@ export const useAppStore = create<AppState>((set) => ({
   aggregateAnalysis: null,
   isProcessing: false,
   processingProgress: 0,
+  processingStatus: '',
   analysisMethod: localStorage.getItem('sentiment_analysisMethod') as 'vader' | 'llm' | 'cloud' || 'vader',
-  llmModel: localStorage.getItem('sentiment_llmModel') || 'llama3.2',
+  llmModel: localStorage.getItem('sentiment_llmModel') || 'gemma3:27b',
   cloudProvider: localStorage.getItem('sentiment_cloudProvider') as 'openai' | 'gemini' | 'anthropic' || 'openai',
   cloudApiKey: localStorage.getItem('sentiment_cloudApiKey') || '',
 
@@ -89,8 +91,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   setAggregateAnalysis: (analysis) => set({ aggregateAnalysis: analysis }),
 
-  setProcessing: (isProcessing, progress = 0) =>
-    set({ isProcessing, processingProgress: progress }),
+  setProcessing: (isProcessing, progress = 0, status = '') =>
+    set({ isProcessing, processingProgress: progress, processingStatus: status }),
 
   setAnalysisMethod: (method) => {
     localStorage.setItem('sentiment_analysisMethod', method);
@@ -122,7 +124,8 @@ export const useAppStore = create<AppState>((set) => ({
       aggregateAnalysis: null,
       isProcessing: false,
       processingProgress: 0,
+      processingStatus: '',
       analysisMethod: 'vader',
-      llmModel: 'llama3.2',
+      llmModel: 'gemma3:27b',
     }),
 }));

@@ -14,7 +14,7 @@ interface ProductSetupDialogProps {
 
 export default function ProductSetupDialog({ isOpen, onClose }: ProductSetupDialogProps) {
   const navigate = useNavigate();
-  const { mode, products, isProcessing, processingProgress, updateProduct } = useAppStore();
+  const { mode, products, isProcessing, processingProgress, processingStatus, updateProduct } = useAppStore();
   const { runAnalysis } = useAnalysis();
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
@@ -121,6 +121,11 @@ export default function ProductSetupDialog({ isOpen, onClose }: ProductSetupDial
                         <div className="absolute inset-0 bg-white/20 animate-pulse" />
                       </div>
                     </div>
+                    {processingStatus && (
+                      <p className="text-xs text-text-secondary animate-pulse text-center">
+                        {processingStatus}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <Button 
