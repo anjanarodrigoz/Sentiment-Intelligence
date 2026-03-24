@@ -33,7 +33,7 @@ export async function scrapeProductUrl(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || `Scrape failed: ${response.status}`);
+    throw new Error(data.message || data.error || `Scrape failed: ${response.status}`);
   }
 
   return data as ScrapeResponse;

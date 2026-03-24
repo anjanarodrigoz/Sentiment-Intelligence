@@ -71,7 +71,7 @@ export default function LandingPage() {
         <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-semibold text-sm">
           ✨ The most advanced API for Product Analysis
         </div>
-        <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text text-gradient mb-6 tracking-tight">
+        <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text text-gradient mb-6 pb-4 tracking-tight">
           Consumer Sentiment Intelligence
         </h1>
         <p className="text-text-secondary text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed">

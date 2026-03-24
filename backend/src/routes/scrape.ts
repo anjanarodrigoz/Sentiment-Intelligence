@@ -7,6 +7,7 @@ import type { Brand } from '../models/Brand.js';
 import type { Product } from '../models/Product.js';
 import type { ProductVersion } from '../models/ProductVersion.js';
 import type { Review } from '../models/Review.js';
+import { scrapeRateLimiter } from '../middleware/rateLimiter.js';
 
 export const scrapeRoute = Router();
 
@@ -445,7 +446,7 @@ scrapeRoute.delete('/products/:urlHash', async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-scrapeRoute.post('/scrape', async (req, res) => {
+scrapeRoute.post('/scrape', scrapeRateLimiter, async (req, res) => {
   const { url, brand, forceRescrape = false } = req.body;
 
   if (!url || typeof url !== 'string') {
@@ -562,7 +563,7 @@ scrapeRoute.post('/scrape', async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-scrapeRoute.post('/scrape/stream', async (req, res) => {
+scrapeRoute.post('/scrape/stream', scrapeRateLimiter, async (req, res) => {
   const { url, brand, forceRescrape = false } = req.body;
 
   if (!url || typeof url !== 'string') {
