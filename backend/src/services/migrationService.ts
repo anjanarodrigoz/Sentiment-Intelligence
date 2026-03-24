@@ -3,13 +3,14 @@ import type { Brand } from '../models/Brand.js';
 
 // Brand data extracted from registry.ts
 // Maps brand ID to scraper type based on brandScraperMap
-const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
+const BRAND_DATA: (Omit<Brand, '_id' | 'createdAt' | 'updatedAt'> & { onboarding: boolean })[] = [
   {
     id: 'nike',
     name: 'Nike',
     logoUrl: '/brands/nike.png',
     scraperType: 'nike',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'under-armour',
@@ -17,6 +18,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/under-armour.png',
     scraperType: 'bazaarvoice',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'nordstrom',
@@ -24,6 +26,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/nordstrom.png',
     scraperType: 'bazaarvoice',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'the-north-face',
@@ -31,6 +34,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/the-north-face.png',
     scraperType: 'bazaarvoice',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'columbia',
@@ -38,6 +42,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/columbia.png',
     scraperType: 'bazaarvoice',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'new-balance',
@@ -45,6 +50,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/new-balance.png',
     scraperType: 'bazaarvoice',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'lululemon',
@@ -52,6 +58,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/lululemon.png',
     scraperType: 'yotpo',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'allbirds',
@@ -59,6 +66,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/allbirds.png',
     scraperType: 'yotpo',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'gymshark',
@@ -66,6 +74,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/gymshark.png',
     scraperType: 'yotpo',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'adidas',
@@ -73,6 +82,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/adidas.png',
     scraperType: 'powerreviews',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'jcpenney',
@@ -80,6 +90,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/jcpenney.png',
     scraperType: 'powerreviews',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'victorias-secret',
@@ -87,6 +98,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/victorias-secret.png',
     scraperType: 'victoriassecret',
     isActive: true,
+    onboarding: true,
   },
   {
     id: 'amazon',
@@ -94,6 +106,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/amazon.png',
     scraperType: 'amazon',
     isActive: true,
+    onboarding: false,
   },
   {
     id: 'aliexpress',
@@ -101,6 +114,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/aliexpress.png',
     scraperType: 'aliexpress',
     isActive: true,
+    onboarding: false,
   },
   {
     id: 'alibaba',
@@ -108,6 +122,7 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/alibaba.png',
     scraperType: 'alibaba',
     isActive: true,
+    onboarding: false,
   },
   {
     id: 'ebay',
@@ -115,13 +130,16 @@ const BRAND_DATA: Omit<Brand, '_id' | 'createdAt' | 'updatedAt'>[] = [
     logoUrl: '/brands/ebay.png',
     scraperType: 'ebay',
     isActive: true,
+    onboarding: false,
   },
+
   {
     id: 'other',
     name: 'Other',
     logoUrl: '',
     scraperType: 'generic',
     isActive: true,
+    onboarding: true,
   },
 ];
 
@@ -144,6 +162,7 @@ export async function migrateBrands(): Promise<void> {
           logoUrl: brand.logoUrl,
           scraperType: brand.scraperType,
           isActive: brand.isActive,
+          onboarding: brand.onboarding,
           updatedAt: now,
         },
         $setOnInsert: {

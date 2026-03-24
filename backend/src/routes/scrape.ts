@@ -38,7 +38,7 @@ scrapeRoute.get('/brands', async (_req, res) => {
     const brands = await db
       .collection<Brand>('brands')
       .find({ isActive: true })
-      .project({ id: 1, name: 1, logoUrl: 1, _id: 0 })
+      .project({ id: 1, name: 1, logoUrl: 1, onboarding: 1, _id: 0 })
       .toArray();
 
     // Map to match frontend expected format
@@ -46,6 +46,7 @@ scrapeRoute.get('/brands', async (_req, res) => {
       id: brand.id,
       name: brand.name,
       logo: brand.logoUrl,
+      onboarding: brand.onboarding,
     }));
 
     res.json(formattedBrands);
@@ -481,6 +482,17 @@ scrapeRoute.post('/scrape', async (req, res) => {
     console.log(`Force rescrape requested for ${normalizedUrl}`);
   }
 
+  // Check onboarding status from database
+  const db = getDB();
+  const brandDoc = await db.collection<Brand>('brands').findOne({ id: brand });
+  
+  if (brandDoc && brandDoc.onboarding === false) {
+    res.status(403).json({ 
+      error: `Scraping is currently disabled for ${brandDoc.name}. This brand is marked as "Coming Soon".` 
+    });
+    return;
+  }
+
   // Scraper selection
   let scraper = findScraperByBrand(brand);
   if (!scraper && brand === 'other') {
@@ -599,6 +611,18 @@ scrapeRoute.post('/scrape/stream', async (req, res) => {
       console.log(`Cache miss for ${normalizedUrl}`);
     } else {
       console.log(`Force rescrape requested for ${normalizedUrl}`);
+    }
+
+    // Check onboarding status from database
+    const db = getDB();
+    const brandDoc = await db.collection<Brand>('brands').findOne({ id: brand });
+    
+    if (brandDoc && brandDoc.onboarding === false) {
+      sendEvent('error', { 
+        error: `Scraping is currently disabled for ${brandDoc.name}. This brand is marked as "Coming Soon".` 
+      });
+      res.end();
+      return;
     }
 
     // Scraper selection
