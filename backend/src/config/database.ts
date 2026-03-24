@@ -9,6 +9,11 @@ export async function connectDB(): Promise<Db> {
   const uri = process.env.MONGODB_URI || process.env.MONGODB_URL || 'mongodb://localhost:27017';
   const dbName = process.env.MONGODB_DB_NAME || "sentiment_intelligence" ;
 
+  // Securely log URI parts to help debug deployment
+  const protocol = uri.split('://')[0];
+  const hostPart = uri.includes('@') ? uri.split('@')[1] : uri.split('://')[1];
+  console.log(`[Database] Attempting to connect to ${protocol}://${hostPart?.split('/')[0]}...`);
+
   try {
     client = new MongoClient(uri);
     await client.connect();
