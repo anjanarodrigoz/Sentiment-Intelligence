@@ -21,7 +21,6 @@ const QUICK_QUESTIONS = [
 ];
 
 export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,7 +30,7 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
   const [selectedModel, setSelectedModel] = useState('gemma3:27b');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const { analyses, aggregateAnalysis, analysisMethod, cloudProvider, cloudApiKey } = useAppStore();
+  const { analyses, aggregateAnalysis, analysisMethod, cloudProvider, cloudApiKey, chatMessages: messages, setChatMessages: setMessages } = useAppStore();
 
   const activeAnalyses = aggregateAnalysis ? [aggregateAnalysis] : analyses;
 

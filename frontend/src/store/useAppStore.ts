@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { AnalysisMode } from '../types/app';
 import type { ProductInput, ProductAnalysis } from '../types/product';
+import type { ChatMessage } from '../services/llmChat';
 
 interface AppState {
   selectedBrand: string;
@@ -16,6 +17,7 @@ interface AppState {
   llmModel: string;
   cloudProvider: 'openai' | 'gemini' | 'anthropic';
   cloudApiKey: string;
+  chatMessages: ChatMessage[];
 
   setBrand: (brand: string) => void;
   setMode: (mode: AnalysisMode) => void;
@@ -29,6 +31,7 @@ interface AppState {
   setLlmModel: (model: string) => void;
   setCloudProvider: (provider: 'openai' | 'gemini' | 'anthropic') => void;
   setCloudApiKey: (key: string) => void;
+  setChatMessages: (messages: ChatMessage[]) => void;
   reset: () => void;
 }
 
@@ -64,6 +67,7 @@ export const useAppStore = create<AppState>((set) => ({
   llmModel: localStorage.getItem('sentiment_llmModel') || 'gemma3:27b',
   cloudProvider: localStorage.getItem('sentiment_cloudProvider') as 'openai' | 'gemini' | 'anthropic' || 'openai',
   cloudApiKey: localStorage.getItem('sentiment_cloudApiKey') || '',
+  chatMessages: [],
 
   setBrand: (brand) => set({ selectedBrand: brand }),
 
@@ -113,6 +117,8 @@ export const useAppStore = create<AppState>((set) => ({
     localStorage.setItem('sentiment_cloudApiKey', key);
     set({ cloudApiKey: key });
   },
+  
+  setChatMessages: (chatMessages) => set({ chatMessages }),
 
   reset: () =>
     set({
@@ -127,5 +133,6 @@ export const useAppStore = create<AppState>((set) => ({
       processingStatus: '',
       analysisMethod: 'vader',
       llmModel: 'gemma3:27b',
+      chatMessages: [],
     }),
 }));

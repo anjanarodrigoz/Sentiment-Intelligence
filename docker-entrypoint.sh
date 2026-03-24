@@ -3,24 +3,35 @@ set -e
 
 echo "=== Sentiment Intelligence Starting ==="
 
-# Extract host and port from MONGODB_URI for TCP check
-MONGO_HOST=$(echo "$MONGODB_URI" | sed -E 's|mongodb://([^:/]+).*|\1|')
-MONGO_PORT=$(echo "$MONGODB_URI" | sed -E 's|mongodb://[^:]+:([0-9]+).*|\1|')
-MONGO_PORT=${MONGO_PORT:-27017}
+# Skip TCP check for SRV URIs or if parsing fails
+case "$MONGODB_URI" in
+  mongodb+srv://*)
+    echo "Using MongoDB Atlas (SRV). Skipping TCP port check..."
+    ;;
+  *)
+    MONGO_HOST=$(echo "$MONGODB_URI" | sed -E 's|mongodb://([^:/]+).*|\1|')
+    MONGO_PORT=$(echo "$MONGODB_URI" | sed -E 's|mongodb://[^:]+:([0-9]+).*|\1|')
+    MONGO_PORT=${MONGO_PORT:-27017}
 
-echo "Waiting for MongoDB at ${MONGO_HOST}:${MONGO_PORT}..."
-until node -e "
-  const net = require('net');
-  const s = new net.Socket();
-  s.setTimeout(2000);
-  s.connect(${MONGO_PORT}, '${MONGO_HOST}', () => { s.destroy(); process.exit(0); });
-  s.on('error', () => process.exit(1));
-  s.on('timeout', () => { s.destroy(); process.exit(1); });
-" 2>/dev/null; do
-  echo "  MongoDB not ready, retrying in 2s..."
-  sleep 2
-done
-echo "MongoDB is ready."
+    if [ -n "$MONGO_HOST" ] && [ "$MONGO_HOST" != "$MONGODB_URI" ]; then
+      echo "Waiting for MongoDB at ${MONGO_HOST}:${MONGO_PORT}..."
+      until node -e "
+        const net = require('net');
+        const s = new net.Socket();
+        s.setTimeout(2000);
+        s.connect(${MONGO_PORT}, '${MONGO_HOST}', () => { s.destroy(); process.exit(0); });
+        s.on('error', () => process.exit(1));
+        s.on('timeout', () => { s.destroy(); process.exit(1); });
+      " 2>/dev/null; do
+        echo "  MongoDB not ready, retrying in 2s..."
+        sleep 2
+      done
+      echo "MongoDB is ready."
+    else
+      echo "Could not parse MongoDB host. Skipping TCP check..."
+    fi
+    ;;
+esac
 
 # Seed any initial data before launching the HTTP server.  The backend
 # includes a migration script that upserts a fixed list of brands; this is
