@@ -1,6 +1,7 @@
-import { BarChart3, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
+import Logo from '../ui/Logo';
 
 const BRAND_NAMES: Record<string, string> = {
   nike: 'Nike',
@@ -45,15 +46,7 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-        >
-          <BarChart3 className="w-6 h-6 text-primary" />
-          <span className="text-lg font-semibold text-text-primary">
-            Sentiment Intelligence
-          </span>
-        </button>
+        <Logo />
         <div className="flex items-center gap-4">
           {selectedBrand && selectedBrand !== 'other' && (
             <a

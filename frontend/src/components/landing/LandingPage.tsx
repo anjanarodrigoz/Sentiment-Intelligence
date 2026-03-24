@@ -59,7 +59,16 @@ export default function LandingPage() {
       <div className="absolute -bottom-32 left-20 w-96 h-96 bg-purple-400/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000 pointer-events-none"></div>
 
       <div className="text-center mb-16 relative pt-10">
-        <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-semibold text-sm animate-float">
+        <div className="flex justify-center mb-6">
+          <div className="relative w-20 h-20 overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-primary/10 shadow-lg animate-float">
+            <img
+              src="/favicon.png"
+              alt="Sentiment Intelligence Logo"
+              className="w-full h-full object-contain p-2"
+            />
+          </div>
+        </div>
+        <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-semibold text-sm">
           ✨ The most advanced API for Product Analysis
         </div>
         <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text text-gradient mb-6 tracking-tight">
