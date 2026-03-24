@@ -6,6 +6,7 @@ import { sendLlmChatMessage } from '../../services/llmChat';
 import { checkLlmStatus } from '../../services/llmAnalyzer';
 import ChatMessage from './ChatMessage';
 import Button from '../ui/Button';
+import { getModelDisplayName } from '../../config/modelNames';
 
 interface AIChatPanelProps {
   open: boolean;
@@ -20,17 +21,16 @@ const QUICK_QUESTIONS = [
 ];
 
 export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [ollamaRunning, setOllamaRunning] = useState(false);
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState('llama3.2');
+  const [selectedModel, setSelectedModel] = useState('gemma3:27b');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const { analyses, aggregateAnalysis, analysisMethod, cloudProvider, cloudApiKey } = useAppStore();
+  const { analyses, aggregateAnalysis, analysisMethod, cloudProvider, cloudApiKey, chatMessages: messages, setChatMessages: setMessages } = useAppStore();
 
   const activeAnalyses = aggregateAnalysis ? [aggregateAnalysis] : analyses;
 
@@ -128,7 +128,7 @@ export default function AIChatPanel({ open, onClose }: AIChatPanelProps) {
                 className="text-xs appearance-none bg-white border border-border rounded-md pl-2 pr-6 py-1 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 {ollamaModels.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m}>{getModelDisplayName(m)}</option>
                 ))}
               </select>
               <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />

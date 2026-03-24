@@ -105,12 +105,14 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Connect to MongoDB before starting server
-await connectDB();
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Scraper server running on http://0.0.0.0:${PORT}`);
+  console.log(`Swagger docs at http://0.0.0.0:${PORT}/api-docs`);
+});
 
-const server = app.listen(PORT, () => {
-  console.log(`Scraper server running on http://localhost:${PORT}`);
-  console.log(`Swagger docs at http://localhost:${PORT}/api-docs`);
+// Connect to MongoDB in the background
+connectDB().catch(err => {
+  console.error('Initial MongoDB connection failed:', err);
 });
 
 // Graceful shutdown

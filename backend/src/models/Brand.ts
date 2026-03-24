@@ -7,6 +7,7 @@ export interface Brand {
   logoUrl: string;
   scraperType: string;
   isActive: boolean;
+  onboarding: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

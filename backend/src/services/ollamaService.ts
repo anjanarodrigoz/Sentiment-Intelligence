@@ -1,5 +1,5 @@
 const OLLAMA_URL = process.env.OLLAMA_API_URL || 'http://localhost:11434';
-const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'llama3.2';
+const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'gemma3:27b';
 
 interface OllamaModel {
   name: string;
@@ -36,7 +36,7 @@ export async function checkStatus(): Promise<{ running: boolean; models: string[
   }
 }
 
-const BATCH_SIZE = 5;
+const BATCH_SIZE = 10;
 
 function buildSentimentPrompt(reviews: ReviewInput[]): string {
   const reviewList = reviews
@@ -126,12 +126,10 @@ function parseSentimentResponse(response: string, count: number): SentimentResul
   return results;
 }
 
-export async function analyzeSentimentBatch(
+export async function* analyzeSentimentStream(
   reviews: ReviewInput[],
   model: string = DEFAULT_MODEL
-): Promise<SentimentResult[]> {
-  const results: SentimentResult[] = [];
-
+): AsyncGenerator<{ results: SentimentResult[]; index: number; total: number }> {
   for (let i = 0; i < reviews.length; i += BATCH_SIZE) {
     const batch = reviews.slice(i, i + BATCH_SIZE);
     const prompt = buildSentimentPrompt(batch);
@@ -154,9 +152,24 @@ export async function analyzeSentimentBatch(
 
     const data = await response.json();
     const batchResults = parseSentimentResponse(data.response, batch.length);
+
+    yield {
+      results: batchResults,
+      index: i + batch.length,
+      total: reviews.length
+    };
+  }
+}
+
+export async function analyzeSentimentBatch(
+  reviews: ReviewInput[],
+  model: string = DEFAULT_MODEL
+): Promise<SentimentResult[]> {
+  const results: SentimentResult[] = [];
+  const stream = analyzeSentimentStream(reviews, model);
+  for await (const { results: batchResults } of stream) {
     results.push(...batchResults);
   }
-
   return results;
 }
 

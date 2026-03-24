@@ -2,13 +2,14 @@ import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { parseReviewFile } from '../services/fileParser';
 import { analyzeAllReviews, computeSentimentSummary } from '../services/sentimentAnalyzer';
-import { analyzeReviewsWithLLM } from '../services/llmAnalyzer';
+import { analyzeReviewsWithLLMStream } from '../services/llmAnalyzer';
 import { computeAttributeCounts } from '../services/attributeExtractor';
 import { extractKeywords } from '../services/keywordExtractor';
 import { generateSellingPoints } from '../services/sellingPointsGenerator';
 import { aggregateAnalyses } from '../services/aggregator';
 import type { ProductAnalysis } from '../types/product';
 import type { RatingDistribution } from '../types/analysis';
+import type { AnalyzedReview } from '../types/review';
 
 function computeRatingDistribution(reviews: { rating: number }[]): RatingDistribution {
   const dist: RatingDistribution = {
@@ -34,14 +35,16 @@ export function useAnalysis() {
     useAppStore();
 
   const runAnalysis = useCallback(async () => {
-    setProcessing(true, 0);
+    setProcessing(true, 0, 'Starting analysis...');
 
     try {
       const analyses: ProductAnalysis[] = [];
 
       for (let i = 0; i < products.length; i++) {
         const product = products[i];
-        setProcessing(true, Math.round(((i + 0.3) / products.length) * 100));
+        const productLabel = products.length > 1 ? `Product ${i + 1}: ` : '';
+        
+        setProcessing(true, Math.round(((i + 0.1) / products.length) * 100), `${productLabel}Preparing data...`);
 
         // 1. Get reviews from file or URL scrape
         let rawReviews;
@@ -52,24 +55,30 @@ export function useAnalysis() {
         } else {
           throw new Error(`No review data for "${product.title}"`);
         }
-        setProcessing(true, Math.round(((i + 0.5) / products.length) * 100));
 
         // 2. Analyze reviews (VADER, Local LLM, or Cloud LLM based on user selection)
         const { analysisMethod, llmModel, cloudProvider, cloudApiKey } = useAppStore.getState();
         
-        let analyzedReviews;
+        let analyzedReviews: AnalyzedReview[];
         if (analysisMethod === 'vader') {
+          setProcessing(true, Math.round(((i + 0.3) / products.length) * 100), `${productLabel}VADER sentiment analysis...`);
           analyzedReviews = analyzeAllReviews(rawReviews);
         } else {
-          analyzedReviews = await analyzeReviewsWithLLM(
+          const provider = analysisMethod === 'cloud' ? cloudProvider : 'ollama';
+          analyzedReviews = await analyzeReviewsWithLLMStream(
             rawReviews,
             llmModel,
-            analysisMethod === 'cloud' ? cloudProvider : 'ollama',
-            analysisMethod === 'cloud' ? cloudApiKey : undefined
+            provider,
+            analysisMethod === 'cloud' ? cloudApiKey : undefined,
+            (_, index, total) => {
+              const subProgress = (index / total) * 0.6; // 60% of product progress is LLM analysis
+              const overallProgress = ((i + 0.2 + subProgress) / products.length) * 100;
+              setProcessing(true, Math.round(overallProgress), `${productLabel}Analyzed ${index}/${total} reviews...`);
+            }
           );
         }
         
-        setProcessing(true, Math.round(((i + 0.8) / products.length) * 100));
+        setProcessing(true, Math.round(((i + 0.9) / products.length) * 100), `${productLabel}Generating summaries...`);
 
         // 3. Compute summaries
         const sentimentSummary = computeSentimentSummary(analyzedReviews);
