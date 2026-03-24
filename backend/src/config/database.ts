@@ -6,7 +6,7 @@ let db: Db | null = null;
 export async function connectDB(): Promise<Db> {
   if (db) return db;
 
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+  const uri = process.env.MONGODB_URI || process.env.MONGODB_URL || 'mongodb://localhost:27017';
   const dbName = process.env.MONGODB_DB_NAME || "sentiment_intelligence" ;
 
   try {

@@ -3,6 +3,9 @@ set -e
 
 echo "=== Sentiment Intelligence Starting ==="
 
+# Use MONGODB_URI or MONGODB_URL
+MONGODB_URI=${MONGODB_URI:-$MONGODB_URL}
+
 # Skip TCP check for SRV URIs or if parsing fails
 case "$MONGODB_URI" in
   mongodb+srv://*)
