@@ -1,9 +1,11 @@
+import type { HTTPRequest } from 'puppeteer';
 import type { ReviewScraper, ScrapeResult, ScrapedReview, BatchCallback } from './types.js';
-import { createPage, closePage } from './baseScraper.js';
+import { createPage, createStealthPage, closePage } from './baseScraper.js';
 import { politeDelay } from '../utils/rateLimit.js';
 
 const BV_DOMAINS = [
   'newbalance.com',
+  'gymshark.com',
 ];
 
 interface BVConfig {
@@ -12,15 +14,20 @@ interface BVConfig {
 }
 
 async function discoverBVConfig(url: string): Promise<BVConfig> {
-  const page = await createPage();
+  const page = await createStealthPage();
 
   try {
     // Intercept network requests to find BV API calls
     const bvRequests: string[] = [];
 
-    page.on('request', (req) => {
+    page.on('request', (req: HTTPRequest) => {
       const reqUrl = req.url();
-      if (reqUrl.includes('bazaarvoice.com') || reqUrl.includes('bv-api')) {
+      if (
+        reqUrl.includes('bazaarvoice.com') ||
+        reqUrl.includes('bv-api') ||
+        reqUrl.includes('reviews.api') ||
+        reqUrl.includes('passkey=')
+      ) {
         bvRequests.push(reqUrl);
       }
     });
@@ -29,13 +36,24 @@ async function discoverBVConfig(url: string): Promise<BVConfig> {
 
     // Try to find BV config from intercepted requests
     for (const reqUrl of bvRequests) {
-      const params = new URL(reqUrl).searchParams;
-      const passkey = params.get('passkey') || params.get('apikey');
-      const productId = params.get('filter') || params.get('productId');
+      const urlObj = new URL(reqUrl);
+      const params = urlObj.searchParams;
+
+      // Helper to get param regardless of case
+      const getParam = (name: string) => {
+        for (const [key, value] of params.entries()) {
+          if (key.toLowerCase() === name.toLowerCase()) return value;
+        }
+        return null;
+      };
+
+      const passkey = getParam('passkey') || getParam('apikey');
+      const productId = getParam('filter') || getParam('productId');
+
       if (passkey) {
-        // Extract productId from filter param like "productId:eq:ABC123"
+        // Extract productId from filter param like "productId:eq:ABC123" or "ProductId:ABC123"
         let pid = '';
-        if (productId?.includes('productId')) {
+        if (productId?.toLowerCase().includes('productid')) {
           pid = productId.split(':').pop() || '';
         } else if (productId) {
           pid = productId;
@@ -122,50 +140,39 @@ async function fetchBVReviews(
   let batchNumber = 1;
 
   while (reviews.length < limit) {
-    const apiUrl = `https://api.bazaarvoice.com/data/batch.json?passkey=${passkey}&apiversion=5.5&resource.q0=reviews&filter.q0=isratingsonly%3Aeq%3Afalse&filter.q0=productid%3Aeq%3A${productId}&limit.q0=${batchSize}&offset.q0=${offset}&sort.q0=submissiontime%3Adesc&resource.q1=products&filter.q1=id%3Aeq%3A${productId}`;
+    const apiUrl = `https://api.bazaarvoice.com/data/batch.json?passkey=${passkey}&apiversion=5.5&resource.q0=reviews&filter.q0=isratingsonly%3Aeq%3Afalse&filter.q0=productid%3Aeq%3A${productId}&limit.q0=${batchSize}&offset.q0=${offset}&sort.q0=submissiontime%3Adesc&resource.q1=products&filter.q1=id%3Aeq%3A${productId}&stats.q1=reviews`;
 
     const response = await fetch(apiUrl);
     if (!response.ok) {
       throw new Error(`BazaarVoice API error: ${response.status}`);
     }
 
-    const data = await response.json() as {
-      BatchedResults: {
-        q0: {
-          Results: Array<{
-            ReviewText: string;
-            Rating: number;
-            SubmissionTime: string;
-          }>;
-          TotalResults: number;
-        };
-        q1?: {
-          Results: Array<{
-            Name: string;
-            ImageUrl: string;
-            ReviewStatistics: {
-              AverageOverallRating: number;
-              TotalReviewCount: number;
-            };
-          }>;
-        };
-      };
-    };
-
-    const q0 = data.BatchedResults?.q0;
-    const q1 = data.BatchedResults?.q1;
+    const jsonResponse = await response.json() as any;
+    const batched = jsonResponse.BatchedResults;
+    const q0 = batched?.q0 || jsonResponse;
+    const q1 = batched?.q1;
+    const includes = q0?.Includes || jsonResponse?.Includes || batched?.q0?.Includes;
 
     if (!q0?.Results) break;
 
     // Extract product info on first request
-    if (offset === 0 && q1?.Results?.[0]) {
-      const prod = q1.Results[0];
-      productInfo = {
-        title: prod.Name || '',
-        imageUrl: prod.ImageUrl || '',
-        rating: prod.ReviewStatistics?.AverageOverallRating || 0,
-        reviewCount: prod.ReviewStatistics?.TotalReviewCount || 0,
-      };
+    if (offset === 0) {
+      // 1. Try BatchedResults q1 (standard for our batch request)
+      const q1Prod = q1?.Results?.[0];
+      
+      // 2. Try Includes.Products (common for Gymshark/non-batched)
+      const incProd = includes?.Products?.[productId] || Object.values(includes?.Products || {})[0];
+      
+      const prod = q1Prod || incProd;
+
+      if (prod) {
+        productInfo = {
+          title: prod.Name || '',
+          imageUrl: prod.ImageUrl || '',
+          rating: prod.ReviewStatistics?.AverageOverallRating || 0,
+          reviewCount: prod.ReviewStatistics?.TotalReviewCount || 0,
+        };
+      }
     }
 
     if (offset === 0 && q0.TotalResults) {

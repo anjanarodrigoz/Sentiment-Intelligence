@@ -44,7 +44,7 @@ const brandScraperMap: Record<string, ReviewScraper> = {
   'new-balance': bazaarVoiceScraper,
   lululemon: lululemonScraper,
   allbirds: yotpoScraper,
-  gymshark: yotpoScraper,
+  gymshark: bazaarVoiceScraper,
   adidas: adidasScraper,
   amazon: amazonScraper,
   aliexpress: aliexpressScraper,

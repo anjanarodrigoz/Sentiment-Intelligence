@@ -5,7 +5,6 @@ import { politeDelay } from '../utils/rateLimit.js';
 const YOTPO_DOMAINS = [
   'lululemon.com',
   'allbirds.com',
-  'gymshark.com',
 ];
 
 interface YotpoConfig {
