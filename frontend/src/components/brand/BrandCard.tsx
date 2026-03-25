@@ -5,6 +5,7 @@ interface BrandCardProps {
   id: string;
   name: string;
   logo: string;
+  onboarding: boolean;
   selected: boolean;
   onClick: () => void;
 }
@@ -12,11 +13,25 @@ interface BrandCardProps {
 export default function BrandCard({
   name,
   logo,
+  onboarding,
   selected,
   onClick,
 }: BrandCardProps) {
   return (
-    <Card selected={selected} onClick={onClick} className="text-center py-6 px-4">
+    <Card
+      selected={selected}
+      onClick={onboarding ? onClick : undefined}
+      className={`text-center py-6 px-4 relative overflow-hidden transition-all ${
+        !onboarding ? 'opacity-70 cursor-not-allowed grayscale-[0.5]' : ''
+      }`}
+    >
+      {!onboarding && (
+        <div className="absolute top-2 right-2 z-10">
+          <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 uppercase tracking-tighter">
+            Coming Soon
+          </span>
+        </div>
+      )}
       <div className="flex items-center justify-center h-16 mb-3">
         {logo ? (
           <img

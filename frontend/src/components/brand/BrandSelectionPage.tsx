@@ -9,6 +9,7 @@ interface Brand {
   id: string;
   name: string;
   logo: string;
+  onboarding: boolean;
 }
 
 export default function BrandSelectionPage() {
@@ -57,6 +58,7 @@ export default function BrandSelectionPage() {
               id={brand.id}
               name={brand.name}
               logo={brand.logo}
+              onboarding={brand.onboarding}
               selected={selectedBrand === brand.id}
               onClick={() => setBrand(brand.id)}
             />

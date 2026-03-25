@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { checkStatus, analyzeSentimentBatch, chatStream } from '../services/ollamaService.js';
-import { analyzeSentimentBatchCloud, chatStreamCloud } from '../services/cloudLlmService.js';
+import { checkStatus, analyzeSentimentBatch, chatStream, analyzeSentimentStream } from '../services/ollamaService.js';
+import { analyzeSentimentBatchCloud, chatStreamCloud, analyzeSentimentStreamCloud } from '../services/cloudLlmService.js';
 import type { ChatMessage } from '../services/ollamaService.js';
 
 export const llmRoute = Router();
@@ -144,6 +144,61 @@ llmRoute.post('/analyze', async (req, res) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'LLM analysis failed';
     res.status(500).json({ error: message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/llm/analyze-stream:
+ *   post:
+ *     summary: Analyze review sentiment with LLM (SSE streaming)
+ *     tags: [LLM]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AnalyzeRequest'
+ *     responses:
+ *       200:
+ *         description: SSE result stream
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               description: "SSE stream of {results: SentimentResult[], index: number, total: number} objects, ending with [DONE]"
+ */
+llmRoute.post('/analyze-stream', async (req, res) => {
+  const { reviews, model, provider, apiKey } = req.body;
+
+  if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
+    res.status(400).json({ error: 'reviews array is required' });
+    return;
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  try {
+    let stream;
+    if (provider && provider !== 'ollama') {
+      if (!apiKey) throw new Error('API key is required for cloud providers');
+      stream = analyzeSentimentStreamCloud(reviews, provider, apiKey);
+    } else {
+      stream = analyzeSentimentStream(reviews, model);
+    }
+
+    for await (const data of stream) {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Analysis failed';
+    res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
+    res.end();
   }
 });
 
